@@ -2,7 +2,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, Response
 
 from app.api.routes import router
 from app.api.ingestion_routes import router as ingestion_router
@@ -58,3 +58,7 @@ def get_app():
 @app.get("/health")
 def health():
     return {"status": "healthy"}
+
+@app.get("/favicon.ico", include_in_schema=False)
+def favicon():
+    return Response(status_code=204)

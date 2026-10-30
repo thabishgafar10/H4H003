@@ -77,10 +77,11 @@ def query_graph(
 
 @router.get("/stats")
 def get_graph_stats(
-    dataset_name: str = Query("KafkaSQLite"),
+    dataset_name: Optional[str] = Query("KafkaSQLite"),
+    project_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     """Returns high-level graph topology metrics and entity distribution counts."""
-    service = KnowledgeGraphService(db, dataset_name=dataset_name)
+    service = KnowledgeGraphService(db, dataset_name=dataset_name or "KafkaSQLite", project_id=project_id)
     return service.get_graph_statistics()
 

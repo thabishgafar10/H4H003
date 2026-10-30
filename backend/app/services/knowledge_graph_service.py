@@ -540,13 +540,21 @@ class KnowledgeGraphService:
             edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=event_node_id, type="CONTRIBUTOR_TRIGGERED_EVENT")
 
     def get_graph_statistics(self) -> Dict[str, Any]:
-        """Returns overall graph metrics across the dataset."""
-        feat_count = self.db.query(Feature).filter(Feature.dataset_name == self.dataset_name).count()
-        alias_count = self.db.query(FeatureAlias).join(Feature).filter(Feature.dataset_name == self.dataset_name).count()
-        link_count = self.db.query(FeatureRecordLink).join(Feature).filter(Feature.dataset_name == self.dataset_name).count()
-        event_count = self.db.query(TemporalEvent).filter(TemporalEvent.dataset_name == self.dataset_name).count()
-        issue_count = self.db.query(Issue).count()
-        commit_count = self.db.query(Commit).count()
+        """Returns overall graph metrics across the dataset or project."""
+        if self.project_id:
+            feat_count = self.db.query(Feature).filter(Feature.project_id == self.project_id).count()
+            alias_count = self.db.query(FeatureAlias).join(Feature).filter(Feature.project_id == self.project_id).count()
+            link_count = self.db.query(FeatureRecordLink).join(Feature).filter(Feature.project_id == self.project_id).count()
+            event_count = self.db.query(TemporalEvent).filter(TemporalEvent.project_id == self.project_id).count()
+            issue_count = self.db.query(Issue).join(SourceRecord, Issue.source_record_id == SourceRecord.id).filter(SourceRecord.project_id == self.project_id).count()
+            commit_count = self.db.query(Commit).join(SourceRecord, Commit.source_record_id == SourceRecord.id).filter(SourceRecord.project_id == self.project_id).count()
+        else:
+            feat_count = self.db.query(Feature).filter(Feature.dataset_name == self.dataset_name).count()
+            alias_count = self.db.query(FeatureAlias).join(Feature).filter(Feature.dataset_name == self.dataset_name).count()
+            link_count = self.db.query(FeatureRecordLink).join(Feature).filter(Feature.dataset_name == self.dataset_name).count()
+            event_count = self.db.query(TemporalEvent).filter(TemporalEvent.dataset_name == self.dataset_name).count()
+            issue_count = self.db.query(Issue).count()
+            commit_count = self.db.query(Commit).count()
 
         return {
             "canonical_features": feat_count,
