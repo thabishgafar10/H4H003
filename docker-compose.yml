@@ -1,0 +1,18 @@
+version: "3.8"
+
+services:
+  temporal-pk:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: temporal-product-knowledge
+    ports:
+      - "8000:8000"
+    environment:
+      - APP_ENV=production
+      - SOURCE_DB_PATH=/app/sample_data/raw/kafka.sqlite3
+      - APP_DB_PATH=/app/backend/data/temporal_knowledge.db
+    volumes:
+      - ./backend/data:/app/backend/data
+      - ./sample_data:/app/sample_data:ro
+    restart: unless-stopped

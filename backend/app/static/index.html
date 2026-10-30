@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Temporal Product Knowledge System | Work 03</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#f0fdf4',
+              100: '#dcfce7',
+              500: '#22c55e',
+              600: '#16a34a',
+              700: '#15803d',
+              900: '#14532d',
+            },
+            temporal: {
+              dark: '#0f172a',
+              card: '#1e293b',
+              border: '#334155',
+              accent: '#38bdf8',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { background-color: #0b0f19; color: #f1f5f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
+    .nav-tab.active { border-bottom: 2px solid #38bdf8; color: #38bdf8; font-weight: 600; }
+    .timeline-line::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 19px;
+      width: 2px;
+      background: #334155;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="border-b border-gray-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+          <i class="fa-solid fa-clock-rotate-left text-white text-xl"></i>
+        </div>
+        <div>
+          <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
+            Temporal Product Knowledge
+          </h1>
+          <p class="text-xs text-slate-400">Evolution, Decisions & Evidence Provenance</p>
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <nav class="flex space-x-6 text-sm">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-5 text-slate-300 hover:text-white transition">
+          <i class="fa-solid fa-chart-pie mr-1.5"></i> Overview
+        </button>
+        <button onclick="switchTab('explorer')" id="tab-explorer" class="nav-tab py-5 text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-list-check mr-1.5"></i> Event Explorer
+        </button>
+        <button onclick="switchTab('timeline')" id="tab-timeline" class="nav-tab py-5 text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-timeline mr-1.5"></i> Issue Timeline
+        </button>
+        <button onclick="switchTab('extraction')" id="tab-extraction" class="nav-tab py-5 text-slate-400 hover:text-white transition">
+          <i class="fa-solid fa-bolt mr-1.5"></i> Extraction Engine
+        </button>
+      </nav>
+
+      <!-- Dataset Badge & System Status -->
+      <div class="flex items-center space-x-3">
+        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+          <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          Kafka Dataset
+        </span>
+        <a href="/docs" target="_blank" class="text-xs text-slate-400 hover:text-cyan-400 border border-slate-700 px-3 py-1.5 rounded-md transition flex items-center">
+          <i class="fa-solid fa-book-open mr-1.5"></i> API Docs
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Container -->
+  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+    <!-- TAB 1: OVERVIEW -->
+    <section id="view-overview" class="space-y-6">
+      <!-- High Level Metrics -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Source Records</p>
+              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-source-records">91,008</h3>
+              <p class="text-xs text-emerald-400 mt-2 flex items-center">
+                <i class="fa-solid fa-shield-check mr-1"></i> 100% Provenance Preserved
+              </p>
+            </div>
+            <div class="p-3 bg-slate-800/80 rounded-lg text-cyan-400">
+              <i class="fa-solid fa-database text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Temporal Events</p>
+              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-temporal-events">-</h3>
+              <p class="text-xs text-cyan-400 mt-2 flex items-center">
+                <i class="fa-solid fa-arrows-to-dot mr-1"></i> Deduplicated & Linked
+              </p>
+            </div>
+            <div class="p-3 bg-slate-800/80 rounded-lg text-emerald-400">
+              <i class="fa-solid fa-calendar-check text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Candidates</p>
+              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-total-candidates">-</h3>
+              <p class="text-xs text-amber-400 mt-2 flex items-center" id="stat-candidate-breakdown">
+                High / Medium / Review
+              </p>
+            </div>
+            <div class="p-3 bg-slate-800/80 rounded-lg text-amber-400">
+              <i class="fa-solid fa-filter text-xl"></i>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+          <div class="flex justify-between items-start">
+            <div>
+              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Evidence Links</p>
+              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-evidence-links">-</h3>
+              <p class="text-xs text-purple-400 mt-2 flex items-center">
+                <i class="fa-solid fa-link mr-1"></i> Verbatim Excerpts
+              </p>
+            </div>
+            <div class="p-3 bg-slate-800/80 rounded-lg text-purple-400">
+              <i class="fa-solid fa-receipt text-xl"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Core Value Statement Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-900/40 rounded-xl p-6">
+        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <div class="space-y-1">
+            <h2 class="text-lg font-semibold text-white flex items-center">
+              <i class="fa-solid fa-quote-left text-cyan-400 mr-2 text-sm"></i>
+              GitHub tells us how code changed. Our system explains how the product evolved.
+            </h2>
+            <p class="text-sm text-slate-300">
+              Connects historical JIRA issues, architectural discussions, votes, and Git commits with verifiable evidence provenance.
+            </p>
+          </div>
+          <button onclick="switchTab('explorer')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-cyan-600/20 whitespace-nowrap">
+            Explore Extracted Events &rarr;
+          </button>
+        </div>
+      </div>
+
+      <!-- Taxonomy Distribution & Extraction Status -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Taxonomy Grid -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center">
+            <i class="fa-solid fa-layer-group text-cyan-400 mr-2"></i>
+            10-Type Event Taxonomy Distribution
+          </h3>
+          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="taxonomy-distribution-grid">
+            <div class="p-4 bg-slate-800/50 border border-slate-800 rounded-lg text-center animate-pulse">
+              <span class="text-xs text-slate-400">Loading taxonomy...</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Latest Run Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center">
+            <i class="fa-solid fa-clock-rotate-left text-emerald-400 mr-2"></i>
+            Latest Extraction Run
+          </h3>
+          <div id="latest-run-details" class="space-y-3 text-sm">
+            <div class="flex justify-between py-2 border-b border-slate-800">
+              <span class="text-slate-400">Run ID:</span>
+              <span class="font-mono text-slate-200" id="run-id">-</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-slate-800">
+              <span class="text-slate-400">Status:</span>
+              <span id="run-status" class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-300">-</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-slate-800">
+              <span class="text-slate-400">Records Scanned:</span>
+              <span class="font-mono text-slate-200" id="run-scanned">-</span>
+            </div>
+            <div class="flex justify-between py-2 border-b border-slate-800">
+              <span class="text-slate-400">Events Accepted:</span>
+              <span class="font-mono text-emerald-400 font-semibold" id="run-accepted">-</span>
+            </div>
+            <div class="pt-2">
+              <button onclick="switchTab('extraction')" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition border border-slate-700">
+                Manage Extraction Runs &rarr;
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: EVENT EXPLORER -->
+    <section id="view-explorer" class="space-y-6 hidden">
+      <!-- Filters Bar -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap gap-3 items-center justify-between">
+        <div class="flex flex-wrap gap-3 items-center flex-1">
+          <select id="filter-event-type" onchange="fetchEvents(0)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+            <option value="">All Event Types</option>
+            <option value="ISSUE_CREATED">ISSUE_CREATED</option>
+            <option value="ISSUE_RESOLVED">ISSUE_RESOLVED</option>
+            <option value="FEATURE_PROPOSED">FEATURE_PROPOSED</option>
+            <option value="DECISION_APPROVED">DECISION_APPROVED</option>
+            <option value="FEATURE_IMPLEMENTED">FEATURE_IMPLEMENTED</option>
+            <option value="FEATURE_MODIFIED">FEATURE_MODIFIED</option>
+            <option value="FEATURE_REMOVED">FEATURE_REMOVED</option>
+            <option value="BUG_REPORTED">BUG_REPORTED</option>
+            <option value="CONCERN_RAISED">CONCERN_RAISED</option>
+            <option value="DECISION_REVERSED">DECISION_REVERSED</option>
+          </select>
+
+          <input type="text" id="filter-issue-id" placeholder="Filter by Issue (e.g. KAFKA-100)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-48">
+
+          <input type="text" id="filter-actor" placeholder="Filter by Actor" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-36">
+
+          <button onclick="fetchEvents(0)" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-medium transition flex items-center">
+            <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Search
+          </button>
+          <button onclick="resetFilters()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">
+            Reset
+          </button>
+        </div>
+
+        <div class="text-xs text-slate-400">
+          Showing <span id="events-count" class="font-bold text-slate-200">0</span> events
+        </div>
+      </div>
+
+      <!-- Events Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="bg-slate-800/60 text-slate-400 uppercase font-medium border-b border-slate-800">
+              <tr>
+                <th class="px-4 py-3">Event Type</th>
+                <th class="px-4 py-3">Timestamp</th>
+                <th class="px-4 py-3">Subject / Description</th>
+                <th class="px-4 py-3">Entity Key</th>
+                <th class="px-4 py-3">Actor</th>
+                <th class="px-4 py-3 text-right">Evidence</th>
+              </tr>
+            </thead>
+            <tbody id="events-tbody" class="divide-y divide-slate-800">
+              <tr>
+                <td colspan="6" class="px-4 py-8 text-center text-slate-500">
+                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading temporal events...
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination -->
+        <div class="p-3 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center text-xs">
+          <button id="btn-prev-events" onclick="prevEventsPage()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40" disabled>
+            &larr; Previous
+          </button>
+          <span id="events-page-indicator" class="text-slate-400">Page 1</span>
+          <button id="btn-next-events" onclick="nextEventsPage()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700">
+            Next &rarr;
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: ISSUE TIMELINE -->
+    <section id="view-timeline" class="space-y-6 hidden">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-wrap gap-4 items-center justify-between">
+        <div class="flex items-center gap-3">
+          <label class="text-xs font-semibold text-slate-400 uppercase">Inspect Issue:</label>
+          <div class="relative">
+            <input type="text" id="timeline-issue-input" value="KAFKA-1" placeholder="Enter Issue Key (e.g. KAFKA-1)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono w-48 uppercase">
+          </div>
+          <button onclick="loadIssueTimeline()" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-medium transition flex items-center">
+            <i class="fa-solid fa-play mr-1.5"></i> Load Timeline
+          </button>
+        </div>
+        <div class="flex gap-2 text-xs">
+          <span class="text-slate-400">Sample Issues:</span>
+          <button onclick="setSampleIssue('KAFKA-1')" class="text-cyan-400 hover:underline">KAFKA-1</button>
+          <button onclick="setSampleIssue('KAFKA-2')" class="text-cyan-400 hover:underline">KAFKA-2</button>
+          <button onclick="setSampleIssue('KAFKA-100')" class="text-cyan-400 hover:underline">KAFKA-100</button>
+          <button onclick="setSampleIssue('KAFKA-500')" class="text-cyan-400 hover:underline">KAFKA-500</button>
+        </div>
+      </div>
+
+      <!-- Timeline Container -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <div id="timeline-header" class="mb-6 pb-4 border-b border-slate-800">
+          <h2 class="text-lg font-bold text-white flex items-center" id="timeline-issue-title">
+            Issue Timeline
+          </h2>
+          <p class="text-xs text-slate-400 mt-1" id="timeline-issue-subtitle">
+            Enter an issue key above to reconstruct its historical evolution.
+          </p>
+        </div>
+
+        <div id="timeline-events-container" class="relative pl-6 space-y-6 timeline-line">
+          <p class="text-xs text-slate-500 italic">No events loaded yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 4: EXTRACTION ENGINE -->
+    <section id="view-extraction" class="space-y-6 hidden">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Run Form -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <h3 class="text-base font-semibold text-white flex items-center">
+            <i class="fa-solid fa-play text-cyan-400 mr-2"></i> Trigger Extraction Run
+          </h3>
+          <p class="text-xs text-slate-400">
+            Execute deterministic extraction and evidence verification across normalized engineering records.
+          </p>
+
+          <form id="extraction-form" onsubmit="triggerExtraction(event)" class="space-y-4 text-xs">
+            <div>
+              <label class="block text-slate-300 font-medium mb-1">Dataset Name</label>
+              <input type="text" id="extract-dataset" value="KafkaSQLite" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
+            </div>
+
+            <div>
+              <label class="block text-slate-300 font-medium mb-1">Extraction Mode</label>
+              <select id="extract-mode" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
+                <option value="DETERMINISTIC">Deterministic (Conservative Rules & Patterns)</option>
+                <option value="HYBRID">Hybrid (Deterministic + LLM proposals)</option>
+              </select>
+            </div>
+
+            <div class="grid grid-cols-2 gap-3">
+              <div>
+                <label class="block text-slate-300 font-medium mb-1">Chunk Size</label>
+                <input type="number" id="extract-chunk" value="500" min="50" max="2000" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
+              </div>
+              <div>
+                <label class="block text-slate-300 font-medium mb-1">Limit Records (Optional)</label>
+                <input type="number" id="extract-limit" placeholder="All" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
+              </div>
+            </div>
+
+            <button type="submit" id="btn-run-extract" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white rounded-lg font-semibold shadow-lg shadow-cyan-600/20 transition flex items-center justify-center">
+              <i class="fa-solid fa-bolt mr-2"></i> Run Extraction
+            </button>
+          </form>
+        </div>
+
+        <!-- Extraction History Runs Table -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
+          <div class="flex justify-between items-center">
+            <h3 class="text-base font-semibold text-white flex items-center">
+              <i class="fa-solid fa-list text-emerald-400 mr-2"></i> Extraction History
+            </h3>
+            <button onclick="fetchExtractionRuns()" class="text-xs text-slate-400 hover:text-cyan-400 flex items-center">
+              <i class="fa-solid fa-rotate mr-1"></i> Refresh
+            </button>
+          </div>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-left text-xs">
+              <thead class="bg-slate-800/60 text-slate-400 uppercase font-medium border-b border-slate-800">
+                <tr>
+                  <th class="px-3 py-2">ID</th>
+                  <th class="px-3 py-2">Status</th>
+                  <th class="px-3 py-2">Mode</th>
+                  <th class="px-3 py-2">Scanned</th>
+                  <th class="px-3 py-2">Accepted</th>
+                  <th class="px-3 py-2">Started At</th>
+                </tr>
+              </thead>
+              <tbody id="runs-tbody" class="divide-y divide-slate-800">
+                <tr>
+                  <td colspan="6" class="px-3 py-6 text-center text-slate-500">Loading runs...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Evidence Inspector Modal -->
+  <div id="evidence-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
+        <div class="flex items-center space-x-2">
+          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+          <h3 class="text-sm font-semibold text-white">Event Evidence Provenance</h3>
+        </div>
+        <button onclick="closeEvidenceModal()" class="text-slate-400 hover:text-white text-base">
+          <i class="fa-solid fa-xmark"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="p-6 overflow-y-auto space-y-4 text-xs">
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700/60 space-y-2">
+          <div class="flex justify-between items-start">
+            <span id="modal-event-type" class="px-2 py-0.5 rounded font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50">
+              EVENT_TYPE
+            </span>
+            <span id="modal-event-time" class="text-slate-400"></span>
+          </div>
+          <h4 id="modal-event-subject" class="text-sm font-medium text-slate-100"></h4>
+          <p id="modal-event-actor" class="text-slate-400"></p>
+        </div>
+
+        <div>
+          <h5 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center">
+            <i class="fa-solid fa-receipt text-purple-400 mr-1.5"></i>
+            Verbatim Evidence Excerpts (<span id="modal-evidence-count">0</span>)
+          </h5>
+          <div id="modal-evidence-list" class="space-y-3">
+            <!-- Injected dynamically -->
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-3 border-t border-slate-800 bg-slate-800/30 flex justify-end">
+        <button onclick="closeEvidenceModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="border-t border-slate-800 bg-slate-950 py-4 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
+      Temporal Product Knowledge System &bull; Autonomous Work 03 Build &bull; MIT License
+    </div>
+  </footer>
+
+  <!-- Application Logic Scripts -->
+  <script>
+    let currentEventsPage = 0;
+    const PAGE_SIZE = 50;
+    let eventsCache = [];
+
+    // Navigation Tab Switching
+    function switchTab(tabName) {
+      ['overview', 'explorer', 'timeline', 'extraction'].forEach(t => {
+        document.getElementById(`view-${t}`).classList.add('hidden');
+        document.getElementById(`tab-${t}`).classList.remove('active');
+        document.getElementById(`tab-${t}`).classList.remove('text-cyan-400');
+        document.getElementById(`tab-${t}`).classList.add('text-slate-400');
+      });
+      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+      const activeTab = document.getElementById(`tab-${tabName}`);
+      activeTab.classList.add('active');
+      activeTab.classList.remove('text-slate-400');
+      activeTab.classList.add('text-cyan-400');
+
+      if (tabName === 'overview') loadOverviewStats();
+      if (tabName === 'explorer') fetchEvents(0);
+      if (tabName === 'extraction') fetchExtractionRuns();
+    }
+
+    // Badge styling helper
+    function getBadgeClass(eventType) {
+      switch(eventType) {
+        case 'DECISION_APPROVED': return 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60';
+        case 'FEATURE_IMPLEMENTED': return 'bg-blue-950/80 text-blue-300 border-blue-700/60';
+        case 'FEATURE_PROPOSED': return 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60';
+        case 'CONCERN_RAISED': return 'bg-amber-950/80 text-amber-300 border-amber-700/60';
+        case 'DECISION_REVERSED': return 'bg-rose-950/80 text-rose-300 border-rose-700/60';
+        case 'FEATURE_REMOVED': return 'bg-red-950/80 text-red-300 border-red-700/60';
+        case 'BUG_REPORTED': return 'bg-orange-950/80 text-orange-300 border-orange-700/60';
+        case 'ISSUE_RESOLVED': return 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60';
+        default: return 'bg-slate-800 text-slate-300 border-slate-700';
+      }
+    }
+
+    // Load Overview Statistics
+    async function loadOverviewStats() {
+      try {
+        const res = await fetch('/api/extraction/statistics?dataset_name=KafkaSQLite');
+        if (!res.ok) return;
+        const data = await res.json();
+
+        document.getElementById('stat-temporal-events').innerText = data.total_temporal_events.toLocaleString();
+        document.getElementById('stat-total-candidates').innerText = data.total_candidates.toLocaleString();
+        document.getElementById('stat-evidence-links').innerText = data.total_evidence_links.toLocaleString();
+
+        const accepted = data.candidates_by_status.accepted || 0;
+        const review = data.candidates_by_status.needs_review || 0;
+        const rejected = data.candidates_by_status.rejected || 0;
+        document.getElementById('stat-candidate-breakdown').innerText = `${accepted} Accepted / ${review} Review / ${rejected} Rejected`;
+
+        // Render taxonomy grid
+        const grid = document.getElementById('taxonomy-distribution-grid');
+        grid.innerHTML = '';
+        const taxonomy = [
+          'ISSUE_CREATED', 'ISSUE_RESOLVED', 'FEATURE_PROPOSED', 'DECISION_APPROVED',
+          'FEATURE_IMPLEMENTED', 'FEATURE_MODIFIED', 'FEATURE_REMOVED', 'BUG_REPORTED',
+          'CONCERN_RAISED', 'DECISION_REVERSED'
+        ];
+        taxonomy.forEach(t => {
+          const count = data.events_by_type[t] || 0;
+          const card = document.createElement('div');
+          card.className = 'p-3 bg-slate-800/40 border border-slate-800 rounded-lg flex flex-col justify-between hover:border-slate-700 transition cursor-pointer';
+          card.onclick = () => {
+            document.getElementById('filter-event-type').value = t;
+            switchTab('explorer');
+          };
+          card.innerHTML = `
+            <div class="text-[11px] font-mono text-slate-400 truncate mb-1" title="${t}">${t}</div>
+            <div class="text-xl font-bold text-white">${count.toLocaleString()}</div>
+          `;
+          grid.appendChild(card);
+        });
+
+        // Latest Run
+        if (data.latest_run) {
+          document.getElementById('run-id').innerText = '#' + data.latest_run.id;
+          document.getElementById('run-status').innerText = data.latest_run.status;
+          document.getElementById('run-status').className = `px-2 py-0.5 rounded text-xs font-semibold ${data.latest_run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400'}`;
+          document.getElementById('run-scanned').innerText = data.latest_run.records_scanned.toLocaleString();
+          document.getElementById('run-accepted').innerText = data.latest_run.events_accepted.toLocaleString();
+        }
+      } catch (err) {
+        console.error('Failed to load statistics:', err);
+      }
+    }
+
+    // Fetch Temporal Events
+    async function fetchEvents(page = 0) {
+      currentEventsPage = page;
+      const type = document.getElementById('filter-event-type').value;
+      const issue = document.getElementById('filter-issue-id').value.trim();
+      const actor = document.getElementById('filter-actor').value.trim();
+
+      let url = `/api/events?skip=${page * PAGE_SIZE}&limit=${PAGE_SIZE}&dataset_name=KafkaSQLite`;
+      if (type) url += `&event_type=${encodeURIComponent(type)}`;
+      if (issue) url += `&issue_id=${encodeURIComponent(issue)}`;
+      if (actor) url += `&actor=${encodeURIComponent(actor)}`;
+
+      const tbody = document.getElementById('events-tbody');
+      tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Fetching events...</td></tr>';
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+        eventsCache = data;
+        document.getElementById('events-count').innerText = data.length;
+        document.getElementById('events-page-indicator').innerText = `Page ${page + 1}`;
+        document.getElementById('btn-prev-events').disabled = page === 0;
+        document.getElementById('btn-next-events').disabled = data.length < PAGE_SIZE;
+
+        if (data.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No events matched current filters.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        data.forEach((ev, idx) => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition';
+          const timeStr = ev.event_time ? new Date(ev.event_time).toISOString().replace('T', ' ').substring(0, 16) : 'None';
+          const badgeClass = getBadgeClass(ev.event_type);
+
+          tr.innerHTML = `
+            <td class="px-4 py-3 whitespace-nowrap">
+              <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">
+                ${ev.event_type}
+              </span>
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">
+              ${timeStr}
+            </td>
+            <td class="px-4 py-3 text-slate-200 max-w-md truncate" title="${ev.subject}">
+              ${ev.subject}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap font-mono text-cyan-400">
+              ${ev.issue_id || (ev.commit_hash ? ev.commit_hash.substring(0, 8) : '-')}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-300">
+              ${ev.actor || 'system'}
+            </td>
+            <td class="px-4 py-3 whitespace-nowrap text-right">
+              <button onclick="openEvidenceModal(${idx})" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-purple-400 border border-slate-700 text-[11px] font-medium transition">
+                <i class="fa-solid fa-receipt mr-1"></i> Evidence (${ev.evidence.length})
+              </button>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-rose-500">Failed to load events: ${err}</td></tr>`;
+      }
+    }
+
+    function prevEventsPage() {
+      if (currentEventsPage > 0) fetchEvents(currentEventsPage - 1);
+    }
+
+    function nextEventsPage() {
+      fetchEvents(currentEventsPage + 1);
+    }
+
+    function resetFilters() {
+      document.getElementById('filter-event-type').value = '';
+      document.getElementById('filter-issue-id').value = '';
+      document.getElementById('filter-actor').value = '';
+      fetchEvents(0);
+    }
+
+    // Evidence Modal
+    function openEvidenceModal(index) {
+      const ev = eventsCache[index];
+      if (!ev) return;
+
+      document.getElementById('modal-event-type').innerText = ev.event_type;
+      document.getElementById('modal-event-time').innerText = ev.event_time ? new Date(ev.event_time).toUTCString() : 'No timestamp';
+      document.getElementById('modal-event-subject').innerText = ev.subject;
+      document.getElementById('modal-event-actor').innerText = `Actor: ${ev.actor || 'system'} | Entity: ${ev.issue_id || ev.commit_hash || 'General'}`;
+      document.getElementById('modal-evidence-count').innerText = ev.evidence.length;
+
+      const container = document.getElementById('modal-evidence-list');
+      container.innerHTML = '';
+
+      if (ev.evidence.length === 0) {
+        container.innerHTML = '<p class="text-slate-500 italic">No evidence records linked.</p>';
+      } else {
+        ev.evidence.forEach(evi => {
+          const item = document.createElement('div');
+          item.className = 'p-3 bg-slate-950/70 border border-slate-800 rounded-lg space-y-1.5';
+          item.innerHTML = `
+            <div class="flex justify-between items-center text-[11px]">
+              <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-300 font-semibold uppercase text-[10px] border border-purple-800">
+                ${evi.evidence_role}
+              </span>
+              <span class="font-mono text-slate-500 text-[10px]" title="SHA-256 Hash">
+                Hash: ${evi.evidence_hash.substring(0, 16)}...
+              </span>
+            </div>
+            <div class="p-2.5 bg-slate-900 border border-slate-800/80 rounded font-mono text-[11px] text-slate-200 whitespace-pre-wrap leading-relaxed">
+              "${evi.evidence_excerpt}"
+            </div>
+          `;
+          container.appendChild(item);
+        });
+      }
+
+      document.getElementById('evidence-modal').classList.remove('hidden');
+    }
+
+    function closeEvidenceModal() {
+      document.getElementById('evidence-modal').classList.add('hidden');
+    }
+
+    // Timeline Viewer
+    function setSampleIssue(key) {
+      document.getElementById('timeline-issue-input').value = key;
+      loadIssueTimeline();
+    }
+
+    async function loadIssueTimeline() {
+      const issueKey = document.getElementById('timeline-issue-input').value.trim().toUpperCase();
+      if (!issueKey) return;
+
+      const container = document.getElementById('timeline-events-container');
+      container.innerHTML = '<p class="text-xs text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading timeline for ' + issueKey + '...</p>';
+
+      try {
+        const res = await fetch(`/api/events/issues/${encodeURIComponent(issueKey)}/timeline`);
+        const data = await res.json();
+
+        document.getElementById('timeline-issue-title').innerText = `${issueKey}: ${data.summary || 'Kafka Issue'}`;
+        document.getElementById('timeline-issue-subtitle').innerText = `Status: ${data.status || 'Unknown'} &bull; Total Events: ${data.total_events}`;
+
+        if (data.timeline.length === 0) {
+          container.innerHTML = '<p class="text-xs text-slate-500 italic">No temporal events recorded for ' + issueKey + ' yet. Try running extraction first.</p>';
+          return;
+        }
+
+        container.innerHTML = '';
+        data.timeline.forEach((item, idx) => {
+          const div = document.createElement('div');
+          div.className = 'relative flex items-start space-x-4';
+          const timeStr = item.event_time ? new Date(item.event_time).toISOString().replace('T', ' ').substring(0, 16) : 'Unspecified Time';
+          const badgeClass = getBadgeClass(item.event_type);
+
+          div.innerHTML = `
+            <div class="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center shrink-0 z-10">
+              <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
+            </div>
+            <div class="flex-1 bg-slate-800/40 border border-slate-800 rounded-lg p-4 space-y-2">
+              <div class="flex justify-between items-start">
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">
+                  ${item.event_type}
+                </span>
+                <span class="text-[11px] text-slate-400 font-mono">${timeStr}</span>
+              </div>
+              <h4 class="text-sm font-medium text-slate-100">${item.subject}</h4>
+              <p class="text-xs text-slate-400">Actor: <span class="text-slate-200 font-medium">${item.actor || 'system'}</span></p>
+              ${item.evidence.length > 0 ? `
+                <div class="mt-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
+                  <span class="font-semibold text-slate-300">Verbatim Excerpt:</span> "${item.evidence[0].evidence_excerpt}"
+                </div>
+              ` : ''}
+            </div>
+          `;
+          container.appendChild(div);
+        });
+      } catch (err) {
+        container.innerHTML = `<p class="text-xs text-rose-500">Failed to load timeline: ${err}</p>`;
+      }
+    }
+
+    // Extraction Runner & History
+    async function triggerExtraction(e) {
+      e.preventDefault();
+      const btn = document.getElementById('btn-run-extract');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Extracting...';
+
+      const payload = {
+        dataset_name: document.getElementById('extract-dataset').value.trim() || 'KafkaSQLite',
+        extraction_mode: document.getElementById('extract-mode').value,
+        chunk_size: parseInt(document.getElementById('extract-chunk').value) || 500,
+        max_issues: document.getElementById('extract-limit').value ? parseInt(document.getElementById('extract-limit').value) : null,
+      };
+
+      try {
+        const res = await fetch('/api/extraction/run', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        const result = await res.json();
+        alert(`Extraction finished! Run ID: ${result.id}\nStatus: ${result.status}\nAccepted: ${result.events_accepted}\nScanned: ${result.records_scanned}`);
+        fetchExtractionRuns();
+        loadOverviewStats();
+      } catch (err) {
+        alert('Extraction failed: ' + err);
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-bolt mr-2"></i> Run Extraction';
+      }
+    }
+
+    async function fetchExtractionRuns() {
+      const tbody = document.getElementById('runs-tbody');
+      tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading runs...</td></tr>';
+      try {
+        const res = await fetch('/api/extraction/runs?limit=15&dataset_name=KafkaSQLite');
+        const runs = await res.json();
+        if (runs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-slate-500">No extraction runs recorded yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        runs.forEach(run => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition';
+          const time = run.started_at ? new Date(run.started_at).toISOString().replace('T', ' ').substring(0, 16) : '-';
+          const statusClass = run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-amber-950 text-amber-400 border-amber-800';
+
+          tr.innerHTML = `
+            <td class="px-3 py-2 font-mono text-cyan-400 font-bold">#${run.id}</td>
+            <td class="px-3 py-2">
+              <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${run.status}</span>
+            </td>
+            <td class="px-3 py-2 text-slate-300">${run.extraction_mode}</td>
+            <td class="px-3 py-2 text-slate-300 font-mono">${run.records_scanned.toLocaleString()}</td>
+            <td class="px-3 py-2 text-emerald-400 font-mono font-semibold">${run.events_accepted.toLocaleString()}</td>
+            <td class="px-3 py-2 text-slate-400 font-mono">${time}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="6" class="px-3 py-6 text-center text-rose-500">Failed: ${err}</td></tr>`;
+      }
+    }
+
+    // Initialize on page load
+    window.onload = () => {
+      loadOverviewStats();
+    };
+  </script>
+</body>
+</html>

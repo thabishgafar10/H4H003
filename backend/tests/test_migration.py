@@ -15,6 +15,7 @@ try:
         get_applied_versions,
     )
     from backend.migrations import migration_001_unresolved_5col_unique as m001
+    from backend.migrations import migration_002_temporal_event_extraction as m002
 except ModuleNotFoundError:
     from migrations.runner import (
         backup_database,
@@ -24,6 +25,7 @@ except ModuleNotFoundError:
         get_applied_versions,
     )
     from migrations import migration_001_unresolved_5col_unique as m001
+    from migrations import migration_002_temporal_event_extraction as m002
 
 
 @pytest.fixture
@@ -191,3 +193,45 @@ def test_migration_is_repeatable_and_safe(old_schema_db):
     c.execute("SELECT COUNT(*) FROM unresolved_relationships")
     assert c.fetchone()[0] == 2
     conn.close()
+
+
+def test_migration_002_creates_tables_and_indexes(old_schema_db):
+    conn = sqlite3.connect(str(old_schema_db))
+    assert m002.is_needed(conn) is True
+    conn.close()
+
+    applied = run_migration_file(old_schema_db, m002)
+    assert applied is True
+
+    conn = sqlite3.connect(str(old_schema_db))
+    c = conn.cursor()
+
+    # Verify tables created
+    c.execute("SELECT name FROM sqlite_master WHERE type='table'")
+    tables = {r[0] for r in c.fetchall()}
+    assert {"extraction_runs", "event_candidates", "temporal_events", "event_evidence"}.issubset(tables)
+
+    # Verify unique index on event_candidates: (dataset_name, candidate_fingerprint)
+    c.execute("PRAGMA index_list(event_candidates)")
+    c_indexes = c.fetchall()
+    assert any(idx[2] == 1 for idx in c_indexes)
+
+    # Verify unique index on temporal_events: (dataset_name, event_key)
+    c.execute("PRAGMA index_list(temporal_events)")
+    e_indexes = c.fetchall()
+    assert any(idx[2] == 1 for idx in e_indexes)
+
+    # Verify integrity
+    c.execute("PRAGMA integrity_check")
+    assert c.fetchone()[0] == "ok"
+    conn.close()
+
+
+def test_migration_002_repeatable(old_schema_db):
+    assert run_migration_file(old_schema_db, m002) is True
+    assert run_migration_file(old_schema_db, m002) is False
+
+    conn = sqlite3.connect(str(old_schema_db))
+    assert m002.is_needed(conn) is False
+    conn.close()
+

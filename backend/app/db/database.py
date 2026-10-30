@@ -28,6 +28,10 @@ def init_db(target_engine=None):
     from app.models.issue_relationships import IssueComponent, IssueFixVersion, IssueLink, CommitIssueLink
     from app.models.ingestion_batch import IngestionBatch
     from app.models.unresolved_relationship import UnresolvedRelationship
+    from app.models.extraction_run import ExtractionRun
+    from app.models.event_candidate import EventCandidate
+    from app.models.temporal_event import TemporalEvent
+    from app.models.event_evidence import EventEvidence
 
     eng = target_engine if target_engine is not None else engine
     Base.metadata.create_all(bind=eng)

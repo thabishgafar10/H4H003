@@ -6,6 +6,10 @@ from app.models.code_change import CodeChange
 from app.models.issue_relationships import IssueComponent, IssueFixVersion, IssueLink, CommitIssueLink
 from app.models.ingestion_batch import IngestionBatch
 from app.models.unresolved_relationship import UnresolvedRelationship
+from app.models.extraction_run import ExtractionRun
+from app.models.event_candidate import EventCandidate
+from app.models.temporal_event import TemporalEvent
+from app.models.event_evidence import EventEvidence
 
 __all__ = [
     "SourceRecord",
@@ -19,4 +23,8 @@ __all__ = [
     "CommitIssueLink",
     "IngestionBatch",
     "UnresolvedRelationship",
+    "ExtractionRun",
+    "EventCandidate",
+    "TemporalEvent",
+    "EventEvidence",
 ]

@@ -182,10 +182,12 @@ def run_all_migrations(db_path: Optional[Path] = None) -> List[str]:
 
     try:
         from backend.migrations import migration_001_unresolved_5col_unique as m001
+        from backend.migrations import migration_002_temporal_event_extraction as m002
     except ModuleNotFoundError:
         from migrations import migration_001_unresolved_5col_unique as m001
+        from migrations import migration_002_temporal_event_extraction as m002
 
-    migrations = [m001]
+    migrations = [m001, m002]
     applied_list = []
 
     for m in migrations:
