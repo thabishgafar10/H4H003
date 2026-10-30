@@ -3,9 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Temporal Product Knowledge System | Work 03</title>
+  <title>Temporal Product Knowledge System</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script>
     tailwind.config = {
       darkMode: 'class',
@@ -43,6 +44,13 @@
       width: 2px;
       background: #334155;
     }
+    .node-feature { fill: #8b5cf6; stroke: #c4b5fd; stroke-width: 2; }
+    .node-issue { fill: #3b82f6; stroke: #93c5fd; stroke-width: 2; }
+    .node-commit { fill: #10b981; stroke: #6ee7b7; stroke-width: 2; }
+    .node-event { fill: #f59e0b; stroke: #fde68a; stroke-width: 2; }
+    .node-contributor { fill: #06b6d4; stroke: #a5f3fc; stroke-width: 2; }
+    .node-evidence { fill: #f43f5e; stroke: #fecdd3; stroke-width: 2; }
+    .edge-line { stroke: #475569; stroke-width: 1.5; stroke-dasharray: 4,2; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -51,30 +59,39 @@
   <header class="border-b border-gray-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
       <div class="flex items-center space-x-3">
-        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 via-indigo-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
           <i class="fa-solid fa-clock-rotate-left text-white text-xl"></i>
         </div>
         <div>
           <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            Temporal Product Knowledge
+            Temporal Product Knowledge System
           </h1>
-          <p class="text-xs text-slate-400">Evolution, Decisions & Evidence Provenance</p>
+          <p class="text-xs text-slate-400">Reconstructing Software Evolution from Engineering Records</p>
         </div>
       </div>
 
       <!-- Navigation Tabs -->
-      <nav class="flex space-x-6 text-sm">
-        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-5 text-slate-300 hover:text-white transition">
+      <nav class="flex space-x-5 text-sm overflow-x-auto">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-5 text-slate-300 hover:text-white transition whitespace-nowrap">
           <i class="fa-solid fa-chart-pie mr-1.5"></i> Overview
         </button>
-        <button onclick="switchTab('explorer')" id="tab-explorer" class="nav-tab py-5 text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-list-check mr-1.5"></i> Event Explorer
+        <button onclick="switchTab('features')" id="tab-features" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+          <i class="fa-solid fa-shapes mr-1.5"></i> Features
         </button>
-        <button onclick="switchTab('timeline')" id="tab-timeline" class="nav-tab py-5 text-slate-400 hover:text-white transition">
+        <button onclick="switchTab('graph')" id="tab-graph" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+          <i class="fa-solid fa-diagram-project mr-1.5"></i> Knowledge Graph
+        </button>
+        <button onclick="switchTab('qa')" id="tab-qa" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+          <i class="fa-solid fa-brain mr-1.5"></i> Historical QA
+        </button>
+        <button onclick="switchTab('explorer')" id="tab-explorer" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+          <i class="fa-solid fa-list-check mr-1.5"></i> Events
+        </button>
+        <button onclick="switchTab('timeline')" id="tab-timeline" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
           <i class="fa-solid fa-timeline mr-1.5"></i> Issue Timeline
         </button>
-        <button onclick="switchTab('extraction')" id="tab-extraction" class="nav-tab py-5 text-slate-400 hover:text-white transition">
-          <i class="fa-solid fa-bolt mr-1.5"></i> Extraction Engine
+        <button onclick="switchTab('extraction')" id="tab-extraction" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+          <i class="fa-solid fa-bolt mr-1.5"></i> Extraction
         </button>
       </nav>
 
@@ -96,399 +113,402 @@
 
     <!-- TAB 1: OVERVIEW -->
     <section id="view-overview" class="space-y-6">
-      <!-- High Level Metrics -->
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Source Records</p>
-              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-source-records">91,008</h3>
-              <p class="text-xs text-emerald-400 mt-2 flex items-center">
-                <i class="fa-solid fa-shield-check mr-1"></i> 100% Provenance Preserved
-              </p>
-            </div>
-            <div class="p-3 bg-slate-800/80 rounded-lg text-cyan-400">
-              <i class="fa-solid fa-database text-xl"></i>
-            </div>
+            <span class="text-xs font-medium text-slate-400">Temporal Events</span>
+            <span class="p-2 bg-emerald-950/60 rounded-lg text-emerald-400"><i class="fa-solid fa-calendar-check text-sm"></i></span>
           </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-temporal-events">-</div>
+          <div class="mt-1 text-xs text-emerald-400 flex items-center"><i class="fa-solid fa-check mr-1"></i> 100% Evidence Grounded</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Temporal Events</p>
-              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-temporal-events">-</h3>
-              <p class="text-xs text-cyan-400 mt-2 flex items-center">
-                <i class="fa-solid fa-arrows-to-dot mr-1"></i> Deduplicated & Linked
-              </p>
-            </div>
-            <div class="p-3 bg-slate-800/80 rounded-lg text-emerald-400">
-              <i class="fa-solid fa-calendar-check text-xl"></i>
-            </div>
+            <span class="text-xs font-medium text-slate-400">Canonical Features</span>
+            <span class="p-2 bg-purple-950/60 rounded-lg text-purple-400"><i class="fa-solid fa-shapes text-sm"></i></span>
           </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-canonical-features">10</div>
+          <div class="mt-1 text-xs text-purple-400" id="stat-feature-aliases">Resolved with Aliases & KIPs</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Event Candidates</p>
-              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-total-candidates">-</h3>
-              <p class="text-xs text-amber-400 mt-2 flex items-center" id="stat-candidate-breakdown">
-                High / Medium / Review
-              </p>
-            </div>
-            <div class="p-3 bg-slate-800/80 rounded-lg text-amber-400">
-              <i class="fa-solid fa-filter text-xl"></i>
-            </div>
+            <span class="text-xs font-medium text-slate-400">Verifiable Citations</span>
+            <span class="p-2 bg-rose-950/60 rounded-lg text-rose-400"><i class="fa-solid fa-receipt text-sm"></i></span>
           </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-evidence-links">-</div>
+          <div class="mt-1 text-xs text-slate-400">SHA-256 Hashes & Records</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 relative overflow-hidden">
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <div>
-              <p class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Evidence Links</p>
-              <h3 class="text-2xl font-bold mt-1 text-white" id="stat-evidence-links">-</h3>
-              <p class="text-xs text-purple-400 mt-2 flex items-center">
-                <i class="fa-solid fa-link mr-1"></i> Verbatim Excerpts
-              </p>
-            </div>
-            <div class="p-3 bg-slate-800/80 rounded-lg text-purple-400">
-              <i class="fa-solid fa-receipt text-xl"></i>
-            </div>
+            <span class="text-xs font-medium text-slate-400">Graph Elements</span>
+            <span class="p-2 bg-blue-950/60 rounded-lg text-blue-400"><i class="fa-solid fa-network-wired text-sm"></i></span>
           </div>
+          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-graph-elements">-</div>
+          <div class="mt-1 text-xs text-slate-400">Multi-Hop Traversal Engine</div>
         </div>
       </div>
 
-      <!-- Core Value Statement Banner -->
-      <div class="bg-gradient-to-r from-slate-900 via-indigo-950/40 to-slate-900 border border-indigo-900/40 rounded-xl p-6">
-        <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <div class="space-y-1">
-            <h2 class="text-lg font-semibold text-white flex items-center">
-              <i class="fa-solid fa-quote-left text-cyan-400 mr-2 text-sm"></i>
-              GitHub tells us how code changed. Our system explains how the product evolved.
-            </h2>
-            <p class="text-sm text-slate-300">
-              Connects historical JIRA issues, architectural discussions, votes, and Git commits with verifiable evidence provenance.
-            </p>
-          </div>
-          <button onclick="switchTab('explorer')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-sm font-medium transition shadow-lg shadow-cyan-600/20 whitespace-nowrap">
-            Explore Extracted Events &rarr;
+      <!-- Quick Actions Banner -->
+      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+        <div>
+          <h2 class="text-base font-bold text-white flex items-center">
+            <i class="fa-solid fa-wand-magic-sparkles text-cyan-400 mr-2"></i>
+            Historical AI Question Answering
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">Ask questions about Kafka's architectural decisions, feature lifecycles, and contributor attribution.</p>
+        </div>
+        <div class="flex gap-2">
+          <button onclick="switchTab('qa')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow transition">
+            <i class="fa-solid fa-brain mr-1.5"></i> Ask a Question
+          </button>
+          <button onclick="switchTab('graph')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition">
+            <i class="fa-solid fa-diagram-project mr-1.5"></i> Explore Graph
           </button>
         </div>
       </div>
 
-      <!-- Taxonomy Distribution & Extraction Status -->
+      <!-- Taxonomy Grid -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+          <i class="fa-solid fa-tag text-cyan-400 mr-2"></i> Temporal Event Taxonomy Distribution
+        </h3>
+        <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="taxonomy-distribution-grid">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: FEATURES EXPLORER (WORK 04) -->
+    <section id="view-features" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-shapes text-purple-400 mr-2"></i> Canonical Feature Identities
+          </h2>
+          <p class="text-xs text-slate-400">Layered entity resolution connecting code commits, Jira issues, and KIPs to stable product features.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="seedFeatures()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-400 border border-slate-700 text-xs font-medium transition">
+            <i class="fa-solid fa-seedling mr-1"></i> Re-Index Links
+          </button>
+        </div>
+      </div>
+
+      <!-- Feature Search and Filters -->
+      <div class="flex gap-3">
+        <div class="relative flex-1">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
+          <input type="text" id="feature-search" oninput="filterFeatures()" placeholder="Search features by name, acronym, KIP (e.g. KRaft, KIP-500, Streams)..." class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+        </div>
+        <select id="feature-category-filter" onchange="filterFeatures()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300">
+          <option value="">All Categories</option>
+          <option value="CORE">CORE</option>
+          <option value="CLIENT">CLIENT</option>
+          <option value="STREAMS">STREAMS</option>
+          <option value="CONNECT">CONNECT</option>
+          <option value="STORAGE">STORAGE</option>
+          <option value="SECURITY">SECURITY</option>
+          <option value="TOOLS">TOOLS</option>
+        </select>
+      </div>
+
+      <!-- Features Cards Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="features-grid">
+        <div class="p-8 text-center text-slate-500 col-span-2"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading features...</div>
+      </div>
+    </section>
+
+    <!-- TAB 3: KNOWLEDGE GRAPH (WORK 05) -->
+    <section id="view-graph" class="hidden space-y-6">
+      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-diagram-project text-blue-400 mr-2"></i> Temporal Knowledge Graph
+          </h2>
+          <p class="text-xs text-slate-400">Multi-hop graph traversal across Features, Issues, Commits, Temporal Events, and Evidence.</p>
+        </div>
+        <div class="flex flex-wrap items-center gap-2 text-xs">
+          <select id="graph-root-feature" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200">
+            <!-- Dynamically populated -->
+          </select>
+          <select id="graph-depth" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-200">
+            <option value="1">Depth 1</option>
+            <option value="2" selected>Depth 2</option>
+            <option value="3">Depth 3</option>
+          </select>
+          <select id="graph-max-nodes" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-200">
+            <option value="25">25 Nodes</option>
+            <option value="50" selected>50 Nodes</option>
+            <option value="100">100 Nodes</option>
+          </select>
+          <button onclick="renderSelectedGraph()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition">
+            <i class="fa-solid fa-play mr-1"></i> Render Subgraph
+          </button>
+        </div>
+      </div>
+
+      <!-- Graph Visualization Container -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Taxonomy Grid -->
-        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center">
-            <i class="fa-solid fa-layer-group text-cyan-400 mr-2"></i>
-            10-Type Event Taxonomy Distribution
-          </h3>
-          <div class="grid grid-cols-2 sm:grid-cols-3 gap-3" id="taxonomy-distribution-grid">
-            <div class="p-4 bg-slate-800/50 border border-slate-800 rounded-lg text-center animate-pulse">
-              <span class="text-xs text-slate-400">Loading taxonomy...</span>
+        <!-- SVG Canvas -->
+        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-4 min-h-[480px] flex flex-col relative overflow-hidden">
+          <div class="flex justify-between items-center mb-3">
+            <div class="flex items-center space-x-2 text-[11px] text-slate-400">
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-purple-500"></span> Feature
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-blue-500 ml-2"></span> Issue
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-emerald-500 ml-2"></span> Commit
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-amber-500 ml-2"></span> Event
+              <span class="inline-block w-2.5 h-2.5 rounded-full bg-rose-500 ml-2"></span> Evidence
             </div>
+            <div id="graph-meta-counts" class="text-xs text-slate-400 font-mono">0 nodes, 0 edges</div>
+          </div>
+          <div id="graph-canvas-container" class="flex-1 w-full h-full flex items-center justify-center">
+            <svg id="graph-svg" class="w-full h-96"></svg>
           </div>
         </div>
 
-        <!-- Latest Run Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <h3 class="text-sm font-semibold text-slate-200 uppercase tracking-wider flex items-center">
-            <i class="fa-solid fa-clock-rotate-left text-emerald-400 mr-2"></i>
-            Latest Extraction Run
+        <!-- Node Inspector Panel -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+            <i class="fa-solid fa-circle-info text-cyan-400 mr-2"></i> Node Inspector
           </h3>
-          <div id="latest-run-details" class="space-y-3 text-sm">
-            <div class="flex justify-between py-2 border-b border-slate-800">
-              <span class="text-slate-400">Run ID:</span>
-              <span class="font-mono text-slate-200" id="run-id">-</span>
-            </div>
-            <div class="flex justify-between py-2 border-b border-slate-800">
-              <span class="text-slate-400">Status:</span>
-              <span id="run-status" class="px-2 py-0.5 rounded text-xs font-semibold bg-slate-800 text-slate-300">-</span>
-            </div>
-            <div class="flex justify-between py-2 border-b border-slate-800">
-              <span class="text-slate-400">Records Scanned:</span>
-              <span class="font-mono text-slate-200" id="run-scanned">-</span>
-            </div>
-            <div class="flex justify-between py-2 border-b border-slate-800">
-              <span class="text-slate-400">Events Accepted:</span>
-              <span class="font-mono text-emerald-400 font-semibold" id="run-accepted">-</span>
-            </div>
-            <div class="pt-2">
-              <button onclick="switchTab('extraction')" class="w-full py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium transition border border-slate-700">
-                Manage Extraction Runs &rarr;
-              </button>
-            </div>
+          <div id="node-inspector-content" class="text-xs text-slate-400 space-y-3">
+            <p class="italic text-slate-500">Click on any node in the graph to inspect its properties, evidence, and historical provenance.</p>
           </div>
         </div>
       </div>
     </section>
 
-    <!-- TAB 2: EVENT EXPLORER -->
-    <section id="view-explorer" class="space-y-6 hidden">
-      <!-- Filters Bar -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap gap-3 items-center justify-between">
-        <div class="flex flex-wrap gap-3 items-center flex-1">
-          <select id="filter-event-type" onchange="fetchEvents(0)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
-            <option value="">All Event Types</option>
-            <option value="ISSUE_CREATED">ISSUE_CREATED</option>
-            <option value="ISSUE_RESOLVED">ISSUE_RESOLVED</option>
-            <option value="FEATURE_PROPOSED">FEATURE_PROPOSED</option>
-            <option value="DECISION_APPROVED">DECISION_APPROVED</option>
-            <option value="FEATURE_IMPLEMENTED">FEATURE_IMPLEMENTED</option>
-            <option value="FEATURE_MODIFIED">FEATURE_MODIFIED</option>
-            <option value="FEATURE_REMOVED">FEATURE_REMOVED</option>
-            <option value="BUG_REPORTED">BUG_REPORTED</option>
-            <option value="CONCERN_RAISED">CONCERN_RAISED</option>
-            <option value="DECISION_REVERSED">DECISION_REVERSED</option>
-          </select>
+    <!-- TAB 4: HISTORICAL QA (WORK 06) -->
+    <section id="view-qa" class="hidden space-y-6">
+      <div>
+        <h2 class="text-lg font-bold text-white flex items-center">
+          <i class="fa-solid fa-brain text-cyan-400 mr-2"></i> Historical AI Question Answering
+        </h2>
+        <p class="text-xs text-slate-400">Evidence-grounded natural-language answers backed by 19,319 verified Kafka events and SHA-256 excerpts.</p>
+      </div>
 
-          <input type="text" id="filter-issue-id" placeholder="Filter by Issue (e.g. KAFKA-100)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-48">
+      <!-- Sample Questions Pills -->
+      <div class="space-y-2">
+        <span class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Benchmark Questions:</span>
+        <div class="flex flex-wrap gap-2" id="sample-questions-pills">
+          <!-- Dynamically populated -->
+        </div>
+      </div>
 
-          <input type="text" id="filter-actor" placeholder="Filter by Actor" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 placeholder-slate-500 focus:outline-none focus:border-cyan-500 w-36">
+      <!-- Question Input Form -->
+      <form onsubmit="askHistoricalQuestion(event)" class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex gap-3">
+        <input type="text" id="qa-input" placeholder="Ask a question (e.g., 'Why was ZooKeeper replaced by KRaft?', 'Who implemented Log Compaction?')..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+        <button type="submit" id="qa-submit-btn" class="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition flex items-center">
+          <i class="fa-solid fa-paper-plane mr-2"></i> Ask Engine
+        </button>
+      </form>
 
-          <button onclick="fetchEvents(0)" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-medium transition flex items-center">
-            <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Search
-          </button>
-          <button onclick="resetFilters()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition">
-            Reset
-          </button>
+      <!-- QA Answer Card -->
+      <div id="qa-result-container" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+          <div class="flex items-center space-x-2">
+            <span id="qa-feature-badge" class="px-2.5 py-1 rounded bg-purple-950/80 text-purple-300 border border-purple-800 text-xs font-semibold">Canonical Feature</span>
+            <span id="qa-mode-badge" class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-mono">DETERMINISTIC_GROUNDED</span>
+          </div>
+          <span id="qa-confidence-badge" class="text-xs font-mono text-cyan-400">Confidence: 100%</span>
         </div>
 
+        <!-- Synthesized Answer Text -->
+        <div id="qa-answer-markdown" class="prose prose-invert max-w-none text-xs text-slate-200 leading-relaxed space-y-3">
+          <!-- Rendered Markdown -->
+        </div>
+
+        <!-- Milestone Timeline Ribbon -->
+        <div id="qa-timeline-section" class="pt-4 border-t border-slate-800 space-y-3">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+            <i class="fa-solid fa-timeline text-indigo-400 mr-2"></i> Chronological Timeline Milestones
+          </h4>
+          <div class="space-y-2" id="qa-timeline-events">
+            <!-- Timeline items -->
+          </div>
+        </div>
+
+        <!-- Verifiable Evidence Citations -->
+        <div id="qa-citations-section" class="pt-4 border-t border-slate-800 space-y-3">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+            <i class="fa-solid fa-receipt text-rose-400 mr-2"></i> Grounded Citations & SHA-256 Hashes
+          </h4>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="qa-citations-grid">
+            <!-- Citation cards -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 5: EVENT EXPLORER -->
+    <section id="view-explorer" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-list-check text-emerald-400 mr-2"></i> Verified Temporal Events
+          </h2>
+          <p class="text-xs text-slate-400">Extracted domain events with actor attribution, chronological ordering, and verbatim evidence excerpts.</p>
+        </div>
         <div class="text-xs text-slate-400">
-          Showing <span id="events-count" class="font-bold text-slate-200">0</span> events
+          Showing <span id="events-count" class="font-bold text-slate-200">0</span> events on this page
         </div>
+      </div>
+
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap gap-3 items-center">
+        <select id="filter-event-type" onchange="fetchEvents(0)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+          <option value="">All Event Types</option>
+          <option value="ISSUE_CREATED">ISSUE_CREATED</option>
+          <option value="ISSUE_RESOLVED">ISSUE_RESOLVED</option>
+          <option value="FEATURE_PROPOSED">FEATURE_PROPOSED</option>
+          <option value="DECISION_APPROVED">DECISION_APPROVED</option>
+          <option value="FEATURE_IMPLEMENTED">FEATURE_IMPLEMENTED</option>
+          <option value="FEATURE_MODIFIED">FEATURE_MODIFIED</option>
+          <option value="FEATURE_REMOVED">FEATURE_REMOVED</option>
+          <option value="BUG_REPORTED">BUG_REPORTED</option>
+          <option value="CONCERN_RAISED">CONCERN_RAISED</option>
+          <option value="DECISION_REVERSED">DECISION_REVERSED</option>
+        </select>
+        <input type="text" id="filter-issue-id" onchange="fetchEvents(0)" placeholder="Issue Key (e.g. KAFKA-100)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+        <input type="text" id="filter-actor" onchange="fetchEvents(0)" placeholder="Actor (e.g. junrao)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
+        <button onclick="fetchEvents(0)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-filter mr-1"></i> Filter
+        </button>
       </div>
 
       <!-- Events Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow">
-        <div class="overflow-x-auto">
-          <table class="w-full text-left text-xs">
-            <thead class="bg-slate-800/60 text-slate-400 uppercase font-medium border-b border-slate-800">
-              <tr>
-                <th class="px-4 py-3">Event Type</th>
-                <th class="px-4 py-3">Timestamp</th>
-                <th class="px-4 py-3">Subject / Description</th>
-                <th class="px-4 py-3">Entity Key</th>
-                <th class="px-4 py-3">Actor</th>
-                <th class="px-4 py-3 text-right">Evidence</th>
-              </tr>
-            </thead>
-            <tbody id="events-tbody" class="divide-y divide-slate-800">
-              <tr>
-                <td colspan="6" class="px-4 py-8 text-center text-slate-500">
-                  <i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading temporal events...
-                </td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-4 py-3">Type</th>
+              <th class="px-4 py-3">Timestamp</th>
+              <th class="px-4 py-3">Subject</th>
+              <th class="px-4 py-3">Issue/Commit</th>
+              <th class="px-4 py-3">Actor</th>
+              <th class="px-4 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody id="events-tbody" class="divide-y divide-slate-800/60 font-mono">
+            <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading events...</td></tr>
+          </tbody>
+        </table>
+      </div>
 
-        <!-- Pagination -->
-        <div class="p-3 border-t border-slate-800 bg-slate-900/50 flex justify-between items-center text-xs">
-          <button id="btn-prev-events" onclick="prevEventsPage()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700 disabled:opacity-40" disabled>
-            &larr; Previous
-          </button>
-          <span id="events-page-indicator" class="text-slate-400">Page 1</span>
-          <button id="btn-next-events" onclick="nextEventsPage()" class="px-3 py-1.5 rounded bg-slate-800 text-slate-300 hover:bg-slate-700">
-            Next &rarr;
-          </button>
-        </div>
+      <!-- Pagination -->
+      <div class="flex justify-between items-center text-xs">
+        <button id="btn-prev-events" onclick="fetchEvents(currentEventsPage - 1)" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-40">Previous</button>
+        <span id="events-page-indicator" class="text-slate-400 font-mono">Page 1</span>
+        <button id="btn-next-events" onclick="fetchEvents(currentEventsPage + 1)" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-40">Next</button>
       </div>
     </section>
 
-    <!-- TAB 3: ISSUE TIMELINE -->
-    <section id="view-timeline" class="space-y-6 hidden">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 flex flex-wrap gap-4 items-center justify-between">
-        <div class="flex items-center gap-3">
-          <label class="text-xs font-semibold text-slate-400 uppercase">Inspect Issue:</label>
-          <div class="relative">
-            <input type="text" id="timeline-issue-input" value="KAFKA-1" placeholder="Enter Issue Key (e.g. KAFKA-1)" class="bg-slate-800 border border-slate-700 rounded-lg px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500 font-mono w-48 uppercase">
-          </div>
-          <button onclick="loadIssueTimeline()" class="px-4 py-1.5 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-medium transition flex items-center">
-            <i class="fa-solid fa-play mr-1.5"></i> Load Timeline
-          </button>
-        </div>
-        <div class="flex gap-2 text-xs">
-          <span class="text-slate-400">Sample Issues:</span>
-          <button onclick="setSampleIssue('KAFKA-1')" class="text-cyan-400 hover:underline">KAFKA-1</button>
-          <button onclick="setSampleIssue('KAFKA-2')" class="text-cyan-400 hover:underline">KAFKA-2</button>
-          <button onclick="setSampleIssue('KAFKA-100')" class="text-cyan-400 hover:underline">KAFKA-100</button>
-          <button onclick="setSampleIssue('KAFKA-500')" class="text-cyan-400 hover:underline">KAFKA-500</button>
-        </div>
+    <!-- TAB 6: ISSUE TIMELINE -->
+    <section id="view-timeline" class="hidden space-y-6">
+      <div class="flex gap-3">
+        <input type="text" id="timeline-search-issue" placeholder="Enter Issue Key (e.g. KAFKA-100, KAFKA-98)..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+        <button onclick="loadIssueTimeline()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold transition">
+          <i class="fa-solid fa-timeline mr-1.5"></i> Load Timeline
+        </button>
       </div>
 
-      <!-- Timeline Container -->
       <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <div id="timeline-header" class="mb-6 pb-4 border-b border-slate-800">
-          <h2 class="text-lg font-bold text-white flex items-center" id="timeline-issue-title">
-            Issue Timeline
-          </h2>
-          <p class="text-xs text-slate-400 mt-1" id="timeline-issue-subtitle">
-            Enter an issue key above to reconstruct its historical evolution.
-          </p>
+        <div class="mb-6 pb-4 border-b border-slate-800">
+          <h3 id="timeline-issue-title" class="text-base font-bold text-white">Select or search an issue</h3>
+          <p id="timeline-issue-subtitle" class="text-xs text-slate-400 mt-1">Displays chronological milestones, decisions, and evidence.</p>
         </div>
-
-        <div id="timeline-events-container" class="relative pl-6 space-y-6 timeline-line">
-          <p class="text-xs text-slate-500 italic">No events loaded yet.</p>
+        <div id="issue-timeline-container" class="space-y-6 relative timeline-line pl-2">
+          <p class="text-xs text-slate-500 italic">Enter an issue key above to view its temporal history.</p>
         </div>
       </div>
     </section>
 
-    <!-- TAB 4: EXTRACTION ENGINE -->
-    <section id="view-extraction" class="space-y-6 hidden">
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <!-- Run Form -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <h3 class="text-base font-semibold text-white flex items-center">
-            <i class="fa-solid fa-play text-cyan-400 mr-2"></i> Trigger Extraction Run
-          </h3>
-          <p class="text-xs text-slate-400">
-            Execute deterministic extraction and evidence verification across normalized engineering records.
-          </p>
+    <!-- TAB 7: EXTRACTION ENGINE -->
+    <section id="view-extraction" class="hidden space-y-6">
+      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
+        <h3 class="text-base font-bold text-white mb-2">Run Temporal Event Extraction</h3>
+        <p class="text-xs text-slate-400 mb-4">Extract 10 domain event types across Kafka raw issues, comments, commits, and links with idempotent SHA-256 evidence validation.</p>
 
-          <form id="extraction-form" onsubmit="triggerExtraction(event)" class="space-y-4 text-xs">
-            <div>
-              <label class="block text-slate-300 font-medium mb-1">Dataset Name</label>
-              <input type="text" id="extract-dataset" value="KafkaSQLite" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
-            </div>
-
-            <div>
-              <label class="block text-slate-300 font-medium mb-1">Extraction Mode</label>
-              <select id="extract-mode" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
-                <option value="DETERMINISTIC">Deterministic (Conservative Rules & Patterns)</option>
-                <option value="HYBRID">Hybrid (Deterministic + LLM proposals)</option>
-              </select>
-            </div>
-
-            <div class="grid grid-cols-2 gap-3">
-              <div>
-                <label class="block text-slate-300 font-medium mb-1">Chunk Size</label>
-                <input type="number" id="extract-chunk" value="500" min="50" max="2000" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
-              </div>
-              <div>
-                <label class="block text-slate-300 font-medium mb-1">Limit Records (Optional)</label>
-                <input type="number" id="extract-limit" placeholder="All" class="w-full bg-slate-800 border border-slate-700 rounded-lg px-3 py-2 text-slate-200">
-              </div>
-            </div>
-
-            <button type="submit" id="btn-run-extract" class="w-full py-2.5 bg-gradient-to-r from-cyan-600 to-emerald-600 hover:from-cyan-500 hover:to-emerald-500 text-white rounded-lg font-semibold shadow-lg shadow-cyan-600/20 transition flex items-center justify-center">
+        <form onsubmit="triggerExtraction(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <div>
+            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Dataset</label>
+            <input type="text" id="extract-dataset" value="KafkaSQLite" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Mode</label>
+            <select id="extract-mode" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
+              <option value="DETERMINISTIC_ONLY">Deterministic Extractors</option>
+              <option value="HYBRID">Hybrid (Rules + LLM)</option>
+              <option value="LLM_ONLY">LLM Only</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Max Issues</label>
+            <input type="number" id="extract-limit" value="500" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
+          </div>
+          <div class="flex items-end">
+            <button type="submit" id="btn-run-extract" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow transition">
               <i class="fa-solid fa-bolt mr-2"></i> Run Extraction
             </button>
-          </form>
-        </div>
-
-        <!-- Extraction History Runs Table -->
-        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-4">
-          <div class="flex justify-between items-center">
-            <h3 class="text-base font-semibold text-white flex items-center">
-              <i class="fa-solid fa-list text-emerald-400 mr-2"></i> Extraction History
-            </h3>
-            <button onclick="fetchExtractionRuns()" class="text-xs text-slate-400 hover:text-cyan-400 flex items-center">
-              <i class="fa-solid fa-rotate mr-1"></i> Refresh
-            </button>
           </div>
+        </form>
+      </div>
 
-          <div class="overflow-x-auto">
-            <table class="w-full text-left text-xs">
-              <thead class="bg-slate-800/60 text-slate-400 uppercase font-medium border-b border-slate-800">
-                <tr>
-                  <th class="px-3 py-2">ID</th>
-                  <th class="px-3 py-2">Status</th>
-                  <th class="px-3 py-2">Mode</th>
-                  <th class="px-3 py-2">Scanned</th>
-                  <th class="px-3 py-2">Accepted</th>
-                  <th class="px-3 py-2">Started At</th>
-                </tr>
-              </thead>
-              <tbody id="runs-tbody" class="divide-y divide-slate-800">
-                <tr>
-                  <td colspan="6" class="px-3 py-6 text-center text-slate-500">Loading runs...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
+      <!-- Extraction Run History -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-800 font-bold text-sm text-white">Extraction Run History</div>
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-4 py-3">Run ID</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Mode</th>
+              <th class="px-4 py-3">Scanned</th>
+              <th class="px-4 py-3">Accepted</th>
+              <th class="px-4 py-3">Started At</th>
+            </tr>
+          </thead>
+          <tbody id="runs-tbody" class="divide-y divide-slate-800/60 font-mono">
+            <!-- Dynamically populated -->
+          </tbody>
+        </table>
       </div>
     </section>
+
   </main>
 
-  <!-- Evidence Inspector Modal -->
-  <div id="evidence-modal" class="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-      <!-- Modal Header -->
-      <div class="p-4 border-b border-slate-800 flex justify-between items-center bg-slate-800/50">
-        <div class="flex items-center space-x-2">
-          <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
-          <h3 class="text-sm font-semibold text-white">Event Evidence Provenance</h3>
-        </div>
-        <button onclick="closeEvidenceModal()" class="text-slate-400 hover:text-white text-base">
-          <i class="fa-solid fa-xmark"></i>
-        </button>
-      </div>
-
-      <!-- Modal Body -->
-      <div class="p-6 overflow-y-auto space-y-4 text-xs">
-        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700/60 space-y-2">
-          <div class="flex justify-between items-start">
-            <span id="modal-event-type" class="px-2 py-0.5 rounded font-mono font-bold text-cyan-400 bg-cyan-950/60 border border-cyan-800/50">
-              EVENT_TYPE
-            </span>
-            <span id="modal-event-time" class="text-slate-400"></span>
-          </div>
-          <h4 id="modal-event-subject" class="text-sm font-medium text-slate-100"></h4>
-          <p id="modal-event-actor" class="text-slate-400"></p>
-        </div>
-
-        <div>
-          <h5 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2 flex items-center">
-            <i class="fa-solid fa-receipt text-purple-400 mr-1.5"></i>
-            Verbatim Evidence Excerpts (<span id="modal-evidence-count">0</span>)
-          </h5>
-          <div id="modal-evidence-list" class="space-y-3">
-            <!-- Injected dynamically -->
-          </div>
-        </div>
-      </div>
-
-      <!-- Modal Footer -->
-      <div class="p-3 border-t border-slate-800 bg-slate-800/30 flex justify-end">
-        <button onclick="closeEvidenceModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-xs font-medium">
-          Close
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Footer -->
-  <footer class="border-t border-slate-800 bg-slate-950 py-4 mt-auto">
-    <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-500">
-      Temporal Product Knowledge System &bull; Autonomous Work 03 Build &bull; MIT License
-    </div>
-  </footer>
-
-  <!-- Application Logic Scripts -->
   <script>
     let currentEventsPage = 0;
-    const PAGE_SIZE = 50;
-    let eventsCache = [];
+    const PAGE_SIZE = 15;
+    let allFeaturesCache = [];
 
-    // Navigation Tab Switching
+    // Tab Switching
     function switchTab(tabName) {
-      ['overview', 'explorer', 'timeline', 'extraction'].forEach(t => {
-        document.getElementById(`view-${t}`).classList.add('hidden');
-        document.getElementById(`tab-${t}`).classList.remove('active');
-        document.getElementById(`tab-${t}`).classList.remove('text-cyan-400');
-        document.getElementById(`tab-${t}`).classList.add('text-slate-400');
+      const tabs = ['overview', 'features', 'graph', 'qa', 'explorer', 'timeline', 'extraction'];
+      tabs.forEach(t => {
+        const elView = document.getElementById(`view-${t}`);
+        const elTab = document.getElementById(`tab-${t}`);
+        if (elView) elView.classList.add('hidden');
+        if (elTab) {
+          elTab.classList.remove('active', 'text-cyan-400');
+          elTab.classList.add('text-slate-400');
+        }
       });
-      document.getElementById(`view-${tabName}`).classList.remove('hidden');
+
+      const activeView = document.getElementById(`view-${tabName}`);
       const activeTab = document.getElementById(`tab-${tabName}`);
-      activeTab.classList.add('active');
-      activeTab.classList.remove('text-slate-400');
-      activeTab.classList.add('text-cyan-400');
+      if (activeView) activeView.classList.remove('hidden');
+      if (activeTab) {
+        activeTab.classList.add('active', 'text-cyan-400');
+        activeTab.classList.remove('text-slate-400');
+      }
 
       if (tabName === 'overview') loadOverviewStats();
+      if (tabName === 'features') loadFeaturesList();
+      if (tabName === 'graph') loadGraphControls();
+      if (tabName === 'qa') loadQAPage();
       if (tabName === 'explorer') fetchEvents(0);
       if (tabName === 'extraction') fetchExtractionRuns();
     }
@@ -512,55 +532,365 @@
     async function loadOverviewStats() {
       try {
         const res = await fetch('/api/extraction/statistics?dataset_name=KafkaSQLite');
-        if (!res.ok) return;
-        const data = await res.json();
+        if (res.ok) {
+          const data = await res.json();
+          document.getElementById('stat-temporal-events').innerText = data.total_temporal_events.toLocaleString();
+          document.getElementById('stat-evidence-links').innerText = data.total_evidence_links.toLocaleString();
 
-        document.getElementById('stat-temporal-events').innerText = data.total_temporal_events.toLocaleString();
-        document.getElementById('stat-total-candidates').innerText = data.total_candidates.toLocaleString();
-        document.getElementById('stat-evidence-links').innerText = data.total_evidence_links.toLocaleString();
+          // Render taxonomy grid
+          const grid = document.getElementById('taxonomy-distribution-grid');
+          grid.innerHTML = '';
+          const taxonomy = [
+            'ISSUE_CREATED', 'ISSUE_RESOLVED', 'FEATURE_PROPOSED', 'DECISION_APPROVED',
+            'FEATURE_IMPLEMENTED', 'FEATURE_MODIFIED', 'FEATURE_REMOVED', 'BUG_REPORTED',
+            'CONCERN_RAISED', 'DECISION_REVERSED'
+          ];
+          taxonomy.forEach(t => {
+            const count = data.events_by_type[t] || 0;
+            const card = document.createElement('div');
+            card.className = 'p-3 bg-slate-800/40 border border-slate-800 rounded-lg flex flex-col justify-between hover:border-slate-700 transition cursor-pointer';
+            card.onclick = () => {
+              document.getElementById('filter-event-type').value = t;
+              switchTab('explorer');
+            };
+            card.innerHTML = `
+              <div class="text-[11px] font-mono text-slate-400 truncate mb-1" title="${t}">${t}</div>
+              <div class="text-lg font-bold text-white">${count.toLocaleString()}</div>
+            `;
+            grid.appendChild(card);
+          });
+        }
 
-        const accepted = data.candidates_by_status.accepted || 0;
-        const review = data.candidates_by_status.needs_review || 0;
-        const rejected = data.candidates_by_status.rejected || 0;
-        document.getElementById('stat-candidate-breakdown').innerText = `${accepted} Accepted / ${review} Review / ${rejected} Rejected`;
-
-        // Render taxonomy grid
-        const grid = document.getElementById('taxonomy-distribution-grid');
-        grid.innerHTML = '';
-        const taxonomy = [
-          'ISSUE_CREATED', 'ISSUE_RESOLVED', 'FEATURE_PROPOSED', 'DECISION_APPROVED',
-          'FEATURE_IMPLEMENTED', 'FEATURE_MODIFIED', 'FEATURE_REMOVED', 'BUG_REPORTED',
-          'CONCERN_RAISED', 'DECISION_REVERSED'
-        ];
-        taxonomy.forEach(t => {
-          const count = data.events_by_type[t] || 0;
-          const card = document.createElement('div');
-          card.className = 'p-3 bg-slate-800/40 border border-slate-800 rounded-lg flex flex-col justify-between hover:border-slate-700 transition cursor-pointer';
-          card.onclick = () => {
-            document.getElementById('filter-event-type').value = t;
-            switchTab('explorer');
-          };
-          card.innerHTML = `
-            <div class="text-[11px] font-mono text-slate-400 truncate mb-1" title="${t}">${t}</div>
-            <div class="text-xl font-bold text-white">${count.toLocaleString()}</div>
-          `;
-          grid.appendChild(card);
-        });
-
-        // Latest Run
-        if (data.latest_run) {
-          document.getElementById('run-id').innerText = '#' + data.latest_run.id;
-          document.getElementById('run-status').innerText = data.latest_run.status;
-          document.getElementById('run-status').className = `px-2 py-0.5 rounded text-xs font-semibold ${data.latest_run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400' : 'bg-amber-950 text-amber-400'}`;
-          document.getElementById('run-scanned').innerText = data.latest_run.records_scanned.toLocaleString();
-          document.getElementById('run-accepted').innerText = data.latest_run.events_accepted.toLocaleString();
+        // Graph stats
+        const gRes = await fetch('/api/graph/stats?dataset_name=KafkaSQLite');
+        if (gRes.ok) {
+          const gData = await gRes.json();
+          document.getElementById('stat-canonical-features').innerText = gData.canonical_features.toLocaleString();
+          document.getElementById('stat-graph-elements').innerText = gData.total_graph_elements.toLocaleString();
         }
       } catch (err) {
-        console.error('Failed to load statistics:', err);
+        console.error('Failed to load overview:', err);
       }
     }
 
-    // Fetch Temporal Events
+    // WORK 04: Features List
+    async function loadFeaturesList() {
+      const container = document.getElementById('features-grid');
+      container.innerHTML = '<div class="p-8 text-center text-slate-500 col-span-2"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading features...</div>';
+      try {
+        const res = await fetch('/api/features?dataset_name=KafkaSQLite');
+        const features = await res.json();
+        allFeaturesCache = features;
+        renderFeaturesGrid(features);
+      } catch (err) {
+        container.innerHTML = `<div class="p-8 text-center text-rose-500 col-span-2">Failed to load features: ${err}</div>`;
+      }
+    }
+
+    function renderFeaturesGrid(features) {
+      const container = document.getElementById('features-grid');
+      if (features.length === 0) {
+        container.innerHTML = '<div class="p-8 text-center text-slate-500 col-span-2">No features found. Click "Re-Index Links" to seed Kafka features.</div>';
+        return;
+      }
+
+      container.innerHTML = '';
+      features.forEach(f => {
+        const card = document.createElement('div');
+        card.className = 'bg-slate-900 border border-slate-800 hover:border-purple-500/50 rounded-xl p-5 space-y-3 transition shadow-sm';
+        const aliasesBadges = f.aliases.map(a => `<span class="px-2 py-0.5 rounded bg-slate-800 text-purple-300 text-[10px] font-mono">${a.alias_name}</span>`).join(' ');
+
+        card.innerHTML = `
+          <div class="flex justify-between items-start">
+            <div>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-950 text-purple-400 border border-purple-800/60">${f.feature_category}</span>
+              <h3 class="text-base font-bold text-white mt-1.5">${f.canonical_name}</h3>
+            </div>
+            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">${f.resolution_status}</span>
+          </div>
+          <p class="text-xs text-slate-400 line-clamp-2">${f.description || 'No description recorded.'}</p>
+          <div class="flex flex-wrap gap-1 items-center pt-2 border-t border-slate-800/60">
+            <span class="text-[10px] text-slate-500 font-semibold uppercase mr-1">Aliases:</span>
+            ${aliasesBadges || '<span class="text-[10px] text-slate-500 italic">None</span>'}
+          </div>
+          <div class="flex justify-between items-center pt-2 text-[11px] text-slate-400">
+            <span>Observed: ${f.first_observed_at ? f.first_observed_at.substring(0, 7) : 'Historical'}</span>
+            <button onclick="viewFeatureGraph(${f.id})" class="px-2.5 py-1 bg-purple-900/60 hover:bg-purple-800 text-purple-200 rounded text-xs transition">
+              <i class="fa-solid fa-diagram-project mr-1"></i> Graph
+            </button>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+    }
+
+    function filterFeatures() {
+      const q = document.getElementById('feature-search').value.toLowerCase().trim();
+      const cat = document.getElementById('feature-category-filter').value;
+      const filtered = allFeaturesCache.filter(f => {
+        const matchesQ = !q || f.canonical_name.toLowerCase().includes(q) || f.aliases.some(a => a.alias_name.toLowerCase().includes(q));
+        const matchesCat = !cat || f.feature_category === cat;
+        return matchesQ && matchesCat;
+      });
+      renderFeaturesGrid(filtered);
+    }
+
+    async function seedFeatures() {
+      if (!confirm('Re-index and establish canonical feature identity links?')) return;
+      try {
+        const res = await fetch('/api/features/seed?dataset_name=KafkaSQLite', { method: 'POST' });
+        const data = await res.json();
+        alert(`Features Seeded: ${data.seeded_features}\nLinks Created: ${data.records_linked}`);
+        loadFeaturesList();
+      } catch (err) {
+        alert('Seeding failed: ' + err);
+      }
+    }
+
+    // WORK 05: Knowledge Graph
+    async function loadGraphControls() {
+      const sel = document.getElementById('graph-root-feature');
+      if (allFeaturesCache.length === 0) {
+        const res = await fetch('/api/features?dataset_name=KafkaSQLite');
+        allFeaturesCache = await res.json();
+      }
+      sel.innerHTML = '';
+      allFeaturesCache.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f.id;
+        opt.innerText = `${f.canonical_name} (${f.feature_category})`;
+        sel.appendChild(opt);
+      });
+      if (allFeaturesCache.length > 0) {
+        renderSelectedGraph();
+      }
+    }
+
+    function viewFeatureGraph(featureId) {
+      switchTab('graph');
+      document.getElementById('graph-root-feature').value = featureId;
+      renderSelectedGraph();
+    }
+
+    async function renderSelectedGraph() {
+      const featId = document.getElementById('graph-root-feature').value;
+      const depth = document.getElementById('graph-depth').value;
+      const maxNodes = document.getElementById('graph-max-nodes').value;
+      if (!featId) return;
+
+      const svg = document.getElementById('graph-svg');
+      svg.innerHTML = '<text x="50%" y="50%" fill="#64748b" text-anchor="middle" font-size="12">Traversing Knowledge Graph...</text>';
+
+      try {
+        const res = await fetch(`/api/graph/features/${featId}?depth=${depth}&max_nodes=${maxNodes}&dataset_name=KafkaSQLite`);
+        if (!res.ok) throw new Error('Graph query returned error');
+        const data = await res.json();
+
+        document.getElementById('graph-meta-counts').innerText = `${data.node_count} nodes, ${data.edge_count} edges`;
+        drawGraphSVG(data);
+      } catch (err) {
+        svg.innerHTML = `<text x="50%" y="50%" fill="#f43f5e" text-anchor="middle" font-size="12">Failed to load graph: ${err}</text>`;
+      }
+    }
+
+    function drawGraphSVG(graph) {
+      const svg = document.getElementById('graph-svg');
+      svg.innerHTML = '';
+      const w = svg.clientWidth || 650;
+      const h = svg.clientHeight || 384;
+      const cx = w / 2;
+      const cy = h / 2;
+
+      // Layout nodes radially around root
+      const nodes = graph.nodes;
+      const nodePos = {};
+      const N = nodes.length;
+
+      nodes.forEach((n, idx) => {
+        if (idx === 0) {
+          nodePos[n.id] = { x: cx, y: cy };
+        } else {
+          const angle = (idx / (N - 1)) * 2 * Math.PI;
+          const r = Math.min(w, h) * 0.38;
+          nodePos[n.id] = {
+            x: cx + r * Math.cos(angle) + (Math.random() - 0.5) * 20,
+            y: cy + r * Math.sin(angle) + (Math.random() - 0.5) * 20,
+          };
+        }
+      });
+
+      // Draw Edges
+      graph.edges.forEach(e => {
+        const p1 = nodePos[e.source];
+        const p2 = nodePos[e.target];
+        if (p1 && p2) {
+          const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line.setAttribute('x1', p1.x);
+          line.setAttribute('y1', p1.y);
+          line.setAttribute('x2', p2.x);
+          line.setAttribute('y2', p2.y);
+          line.setAttribute('class', 'edge-line');
+          svg.appendChild(line);
+        }
+      });
+
+      // Draw Nodes
+      nodes.forEach(n => {
+        const p = nodePos[n.id];
+        if (!p) return;
+
+        const g = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+        g.setAttribute('cursor', 'pointer');
+        g.onclick = () => inspectNode(n);
+
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', p.x);
+        circle.setAttribute('cy', p.y);
+        circle.setAttribute('r', n.type === 'FEATURE' ? '14' : '9');
+
+        let cls = 'node-event';
+        if (n.type === 'FEATURE') cls = 'node-feature';
+        else if (n.type === 'ISSUE') cls = 'node-issue';
+        else if (n.type === 'COMMIT') cls = 'node-commit';
+        else if (n.type === 'CONTRIBUTOR') cls = 'node-contributor';
+        else if (n.type === 'EVIDENCE') cls = 'node-evidence';
+        circle.setAttribute('class', cls);
+
+        const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+        title.textContent = `${n.type}: ${n.label}`;
+        circle.appendChild(title);
+
+        const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+        label.setAttribute('x', p.x + 12);
+        label.setAttribute('y', p.y + 4);
+        label.setAttribute('fill', '#94a3b8');
+        label.setAttribute('font-size', '10');
+        label.setAttribute('font-family', 'monospace');
+        label.textContent = n.label.length > 18 ? n.label.substring(0, 16) + '..' : n.label;
+
+        g.appendChild(circle);
+        g.appendChild(label);
+        svg.appendChild(g);
+      });
+    }
+
+    function inspectNode(node) {
+      const el = document.getElementById('node-inspector-content');
+      let propsHtml = '';
+      for (const [k, v] of Object.entries(node.properties || {})) {
+        if (v) propsHtml += `<div class="flex justify-between py-1 border-b border-slate-800"><span class="text-slate-500 font-mono">${k}:</span><span class="text-slate-300 font-mono truncate max-w-[150px]" title="${v}">${v}</span></div>`;
+      }
+      el.innerHTML = `
+        <div class="space-y-2">
+          <div class="flex justify-between items-center">
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-cyan-400">${node.type}</span>
+            <span class="text-[10px] text-slate-500 font-mono">${node.id}</span>
+          </div>
+          <h4 class="text-sm font-bold text-white">${node.label}</h4>
+          <div class="mt-3 pt-2 text-[11px]">${propsHtml}</div>
+        </div>
+      `;
+    }
+
+    // WORK 06: Historical QA
+    async function loadQAPage() {
+      try {
+        const res = await fetch('/api/qa/sample-questions');
+        const samples = await res.json();
+        const pillsContainer = document.getElementById('sample-questions-pills');
+        pillsContainer.innerHTML = '';
+        samples.forEach(s => {
+          const btn = document.createElement('button');
+          btn.className = 'px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition text-left';
+          btn.innerText = s.question;
+          btn.onclick = () => {
+            document.getElementById('qa-input').value = s.question;
+            askHistoricalQuestion(new Event('submit'));
+          };
+          pillsContainer.appendChild(btn);
+        });
+      } catch (err) {
+        console.error('Failed to load sample questions:', err);
+      }
+    }
+
+    async function askHistoricalQuestion(e) {
+      if (e) e.preventDefault();
+      const q = document.getElementById('qa-input').value.trim();
+      if (!q) return;
+
+      const btn = document.getElementById('qa-submit-btn');
+      btn.disabled = true;
+      btn.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-2"></i> Reasoning...';
+
+      const resContainer = document.getElementById('qa-result-container');
+      resContainer.classList.remove('hidden');
+      document.getElementById('qa-answer-markdown').innerHTML = '<p class="text-slate-400 italic"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Performing entity resolution & retrieving evidence...</p>';
+
+      try {
+        const res = await fetch('/api/qa/ask', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: q, dataset_name: 'KafkaSQLite', include_graph: false })
+        });
+        const data = await res.json();
+
+        // Header badges
+        document.getElementById('qa-feature-badge').innerText = data.canonical_feature || 'General Product History';
+        document.getElementById('qa-mode-badge').innerText = data.synthesis_mode;
+        document.getElementById('qa-confidence-badge').innerText = `Confidence: ${(data.confidence * 100).toFixed(0)}%`;
+
+        // Render Markdown Answer
+        document.getElementById('qa-answer-markdown').innerHTML = marked.parse(data.answer);
+
+        // Timeline Ribbon
+        const tlContainer = document.getElementById('qa-timeline-events');
+        tlContainer.innerHTML = '';
+        if (data.temporal_timeline.length === 0) {
+          tlContainer.innerHTML = '<p class="text-[11px] text-slate-500 italic">No specific chronological milestone events linked.</p>';
+        } else {
+          data.temporal_timeline.forEach(item => {
+            const row = document.createElement('div');
+            row.className = 'flex items-center space-x-3 text-xs bg-slate-950 p-2.5 rounded-lg border border-slate-800/80';
+            const badgeClass = getBadgeClass(item.event_type);
+            row.innerHTML = `
+              <span class="text-slate-400 font-mono text-[11px] whitespace-nowrap">${item.date || 'Undated'}</span>
+              <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeClass}">${item.event_type}</span>
+              <span class="text-slate-200 flex-1 truncate" title="${item.summary}">${item.summary}</span>
+              ${item.actor ? `<span class="text-[11px] text-cyan-400 font-mono">@${item.actor}</span>` : ''}
+            `;
+            tlContainer.appendChild(row);
+          });
+        }
+
+        // Citations
+        const citContainer = document.getElementById('qa-citations-grid');
+        citContainer.innerHTML = '';
+        if (data.citations.length === 0) {
+          citContainer.innerHTML = '<p class="text-[11px] text-slate-500 italic col-span-2">No direct verbatim excerpts retrieved.</p>';
+        } else {
+          data.citations.forEach(cit => {
+            const card = document.createElement('div');
+            card.className = 'bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2';
+            card.innerHTML = `
+              <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
+                <span>${cit.record_type.toUpperCase()}: ${cit.record_id}</span>
+                <span class="text-rose-400 truncate max-w-[120px]" title="${cit.evidence_hash}">sha256:${cit.evidence_hash ? cit.evidence_hash.substring(0, 8) : 'raw'}</span>
+              </div>
+              <p class="text-[11px] text-slate-300 italic line-clamp-3">"${cit.excerpt}"</p>
+            `;
+            citContainer.appendChild(card);
+          });
+        }
+      } catch (err) {
+        document.getElementById('qa-answer-markdown').innerHTML = `<p class="text-rose-500">Error: ${err}</p>`;
+      } finally {
+        btn.disabled = false;
+        btn.innerHTML = '<i class="fa-solid fa-paper-plane mr-2"></i> Ask Engine';
+      }
+    }
+
+    // Fetch Temporal Events (Tab 5)
     async function fetchEvents(page = 0) {
       currentEventsPage = page;
       const type = document.getElementById('filter-event-type').value;
@@ -578,7 +908,6 @@
       try {
         const res = await fetch(url);
         const data = await res.json();
-        eventsCache = data;
         document.getElementById('events-count').innerText = data.length;
         document.getElementById('events-page-indicator').innerText = `Page ${page + 1}`;
         document.getElementById('btn-prev-events').disabled = page === 0;
@@ -590,129 +919,47 @@
         }
 
         tbody.innerHTML = '';
-        data.forEach((ev, idx) => {
+        data.forEach(ev => {
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-slate-800/40 transition';
           const timeStr = ev.event_time ? new Date(ev.event_time).toISOString().replace('T', ' ').substring(0, 16) : 'None';
           const badgeClass = getBadgeClass(ev.event_type);
 
           tr.innerHTML = `
-            <td class="px-4 py-3 whitespace-nowrap">
-              <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">
-                ${ev.event_type}
-              </span>
-            </td>
-            <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">
-              ${timeStr}
-            </td>
-            <td class="px-4 py-3 text-slate-200 max-w-md truncate" title="${ev.subject}">
-              ${ev.subject}
-            </td>
-            <td class="px-4 py-3 whitespace-nowrap font-mono text-cyan-400">
-              ${ev.issue_id || (ev.commit_hash ? ev.commit_hash.substring(0, 8) : '-')}
-            </td>
-            <td class="px-4 py-3 whitespace-nowrap text-slate-300">
-              ${ev.actor || 'system'}
-            </td>
-            <td class="px-4 py-3 whitespace-nowrap text-right">
-              <button onclick="openEvidenceModal(${idx})" class="px-2.5 py-1 rounded bg-slate-800 hover:bg-slate-700 text-purple-400 border border-slate-700 text-[11px] font-medium transition">
-                <i class="fa-solid fa-receipt mr-1"></i> Evidence (${ev.evidence.length})
-              </button>
-            </td>
+            <td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">${ev.event_type}</span></td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">${timeStr}</td>
+            <td class="px-4 py-3 text-slate-200 max-w-md truncate" title="${ev.subject}">${ev.subject}</td>
+            <td class="px-4 py-3 whitespace-nowrap font-mono text-cyan-400">${ev.issue_id || (ev.commit_hash ? ev.commit_hash.substring(0, 8) : '-')}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-300">${ev.actor || 'system'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-right text-[11px] font-mono text-purple-400">${ev.evidence.length} citations</td>
           `;
           tbody.appendChild(tr);
         });
       } catch (err) {
-        tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-rose-500">Failed to load events: ${err}</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="6" class="px-4 py-8 text-center text-rose-500">Failed: ${err}</td></tr>`;
       }
     }
 
-    function prevEventsPage() {
-      if (currentEventsPage > 0) fetchEvents(currentEventsPage - 1);
-    }
-
-    function nextEventsPage() {
-      fetchEvents(currentEventsPage + 1);
-    }
-
-    function resetFilters() {
-      document.getElementById('filter-event-type').value = '';
-      document.getElementById('filter-issue-id').value = '';
-      document.getElementById('filter-actor').value = '';
-      fetchEvents(0);
-    }
-
-    // Evidence Modal
-    function openEvidenceModal(index) {
-      const ev = eventsCache[index];
-      if (!ev) return;
-
-      document.getElementById('modal-event-type').innerText = ev.event_type;
-      document.getElementById('modal-event-time').innerText = ev.event_time ? new Date(ev.event_time).toUTCString() : 'No timestamp';
-      document.getElementById('modal-event-subject').innerText = ev.subject;
-      document.getElementById('modal-event-actor').innerText = `Actor: ${ev.actor || 'system'} | Entity: ${ev.issue_id || ev.commit_hash || 'General'}`;
-      document.getElementById('modal-evidence-count').innerText = ev.evidence.length;
-
-      const container = document.getElementById('modal-evidence-list');
-      container.innerHTML = '';
-
-      if (ev.evidence.length === 0) {
-        container.innerHTML = '<p class="text-slate-500 italic">No evidence records linked.</p>';
-      } else {
-        ev.evidence.forEach(evi => {
-          const item = document.createElement('div');
-          item.className = 'p-3 bg-slate-950/70 border border-slate-800 rounded-lg space-y-1.5';
-          item.innerHTML = `
-            <div class="flex justify-between items-center text-[11px]">
-              <span class="px-2 py-0.5 rounded bg-purple-950 text-purple-300 font-semibold uppercase text-[10px] border border-purple-800">
-                ${evi.evidence_role}
-              </span>
-              <span class="font-mono text-slate-500 text-[10px]" title="SHA-256 Hash">
-                Hash: ${evi.evidence_hash.substring(0, 16)}...
-              </span>
-            </div>
-            <div class="p-2.5 bg-slate-900 border border-slate-800/80 rounded font-mono text-[11px] text-slate-200 whitespace-pre-wrap leading-relaxed">
-              "${evi.evidence_excerpt}"
-            </div>
-          `;
-          container.appendChild(item);
-        });
-      }
-
-      document.getElementById('evidence-modal').classList.remove('hidden');
-    }
-
-    function closeEvidenceModal() {
-      document.getElementById('evidence-modal').classList.add('hidden');
-    }
-
-    // Timeline Viewer
-    function setSampleIssue(key) {
-      document.getElementById('timeline-issue-input').value = key;
-      loadIssueTimeline();
-    }
-
+    // Issue Timeline (Tab 6)
     async function loadIssueTimeline() {
-      const issueKey = document.getElementById('timeline-issue-input').value.trim().toUpperCase();
+      const issueKey = document.getElementById('timeline-search-issue').value.trim();
       if (!issueKey) return;
-
-      const container = document.getElementById('timeline-events-container');
+      const container = document.getElementById('issue-timeline-container');
       container.innerHTML = '<p class="text-xs text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading timeline for ' + issueKey + '...</p>';
 
       try {
         const res = await fetch(`/api/events/issues/${encodeURIComponent(issueKey)}/timeline`);
         const data = await res.json();
-
         document.getElementById('timeline-issue-title').innerText = `${issueKey}: ${data.summary || 'Kafka Issue'}`;
         document.getElementById('timeline-issue-subtitle').innerText = `Status: ${data.status || 'Unknown'} &bull; Total Events: ${data.total_events}`;
 
         if (data.timeline.length === 0) {
-          container.innerHTML = '<p class="text-xs text-slate-500 italic">No temporal events recorded for ' + issueKey + ' yet. Try running extraction first.</p>';
+          container.innerHTML = '<p class="text-xs text-slate-500 italic">No temporal events recorded for ' + issueKey + ' yet.</p>';
           return;
         }
 
         container.innerHTML = '';
-        data.timeline.forEach((item, idx) => {
+        data.timeline.forEach(item => {
           const div = document.createElement('div');
           div.className = 'relative flex items-start space-x-4';
           const timeStr = item.event_time ? new Date(item.event_time).toISOString().replace('T', ' ').substring(0, 16) : 'Unspecified Time';
@@ -724,18 +971,11 @@
             </div>
             <div class="flex-1 bg-slate-800/40 border border-slate-800 rounded-lg p-4 space-y-2">
               <div class="flex justify-between items-start">
-                <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">
-                  ${item.event_type}
-                </span>
+                <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">${item.event_type}</span>
                 <span class="text-[11px] text-slate-400 font-mono">${timeStr}</span>
               </div>
               <h4 class="text-sm font-medium text-slate-100">${item.subject}</h4>
               <p class="text-xs text-slate-400">Actor: <span class="text-slate-200 font-medium">${item.actor || 'system'}</span></p>
-              ${item.evidence.length > 0 ? `
-                <div class="mt-2 pt-2 border-t border-slate-800 text-[11px] text-slate-400">
-                  <span class="font-semibold text-slate-300">Verbatim Excerpt:</span> "${item.evidence[0].evidence_excerpt}"
-                </div>
-              ` : ''}
             </div>
           `;
           container.appendChild(div);
@@ -745,7 +985,7 @@
       }
     }
 
-    // Extraction Runner & History
+    // Extraction Runner & History (Tab 7)
     async function triggerExtraction(e) {
       e.preventDefault();
       const btn = document.getElementById('btn-run-extract');
@@ -755,8 +995,8 @@
       const payload = {
         dataset_name: document.getElementById('extract-dataset').value.trim() || 'KafkaSQLite',
         extraction_mode: document.getElementById('extract-mode').value,
-        chunk_size: parseInt(document.getElementById('extract-chunk').value) || 500,
-        max_issues: document.getElementById('extract-limit').value ? parseInt(document.getElementById('extract-limit').value) : null,
+        chunk_size: 500,
+        max_issues: parseInt(document.getElementById('extract-limit').value) || 500,
       };
 
       try {
@@ -766,7 +1006,7 @@
           body: JSON.stringify(payload)
         });
         const result = await res.json();
-        alert(`Extraction finished! Run ID: ${result.id}\nStatus: ${result.status}\nAccepted: ${result.events_accepted}\nScanned: ${result.records_scanned}`);
+        alert(`Extraction finished! Run ID: ${result.id}\nStatus: ${result.status}\nAccepted: ${result.events_accepted}`);
         fetchExtractionRuns();
         loadOverviewStats();
       } catch (err) {
@@ -781,7 +1021,7 @@
       const tbody = document.getElementById('runs-tbody');
       tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading runs...</td></tr>';
       try {
-        const res = await fetch('/api/extraction/runs?limit=15&dataset_name=KafkaSQLite');
+        const res = await fetch('/api/extraction/runs?limit=10&dataset_name=KafkaSQLite');
         const runs = await res.json();
         if (runs.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="px-3 py-6 text-center text-slate-500">No extraction runs recorded yet.</td></tr>';
@@ -796,14 +1036,12 @@
           const statusClass = run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-amber-950 text-amber-400 border-amber-800';
 
           tr.innerHTML = `
-            <td class="px-3 py-2 font-mono text-cyan-400 font-bold">#${run.id}</td>
-            <td class="px-3 py-2">
-              <span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${run.status}</span>
-            </td>
-            <td class="px-3 py-2 text-slate-300">${run.extraction_mode}</td>
-            <td class="px-3 py-2 text-slate-300 font-mono">${run.records_scanned.toLocaleString()}</td>
-            <td class="px-3 py-2 text-emerald-400 font-mono font-semibold">${run.events_accepted.toLocaleString()}</td>
-            <td class="px-3 py-2 text-slate-400 font-mono">${time}</td>
+            <td class="px-4 py-3 font-mono text-cyan-400 font-bold">#${run.id}</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${run.status}</span></td>
+            <td class="px-4 py-3 text-slate-300">${run.extraction_mode}</td>
+            <td class="px-4 py-3 text-slate-300 font-mono">${run.records_scanned.toLocaleString()}</td>
+            <td class="px-4 py-3 text-emerald-400 font-mono font-semibold">${run.events_accepted.toLocaleString()}</td>
+            <td class="px-4 py-3 text-slate-400 font-mono">${time}</td>
           `;
           tbody.appendChild(tr);
         });

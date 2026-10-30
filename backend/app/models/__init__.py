@@ -10,6 +10,7 @@ from app.models.extraction_run import ExtractionRun
 from app.models.event_candidate import EventCandidate
 from app.models.temporal_event import TemporalEvent
 from app.models.event_evidence import EventEvidence
+from app.models.feature import Feature, FeatureAlias, FeatureRecordLink
 
 __all__ = [
     "SourceRecord",
@@ -27,4 +28,7 @@ __all__ = [
     "EventCandidate",
     "TemporalEvent",
     "EventEvidence",
+    "Feature",
+    "FeatureAlias",
+    "FeatureRecordLink",
 ]

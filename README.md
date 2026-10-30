@@ -1,38 +1,91 @@
 # Temporal Product Knowledge System
-> **"GitHub tells us how code changed. Our system connects engineering records to explain how a product evolved and what evidence supports that history."**
+> **"GitHub tells us how code changed. Our system connects engineering records to explain how a product evolved, when decisions happened, who contributed, what changed, and what evidence supports each conclusion."**
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com)
-[![Tests](https://img.shields.io/badge/Tests-88%20passing-success.svg)](backend/tests/)
+[![Tests](https://img.shields.io/badge/Tests-113%20passing-success.svg)](backend/tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 The **Temporal Product Knowledge System** reconstructs how software products evolve over time using historical development records. It transforms raw issue trackers, architecture discussions, votes, and commit histories into a structured, queryable knowledge base of temporal product events backed by cryptographic verbatim evidence provenance.
 
 ---
 
+## Architecture & Core Subsystems
+
+```
+                                      +-----------------------------+
+                                      |   Historical Raw Records    |
+                                      |  (91,008 Kafka SQLite rows) |
+                                      +--------------+--------------+
+                                                     |
+                                                     v
+                                      +-----------------------------+
+                                      |    Work 02: Ingestion &     |
+                                      |  SourceRecord Provenance    |
+                                      +--------------+--------------+
+                                                     |
+                                                     v
+                                      +-----------------------------+
+                                      |   Work 03: Temporal Event   |
+                                      |     Extraction Pipeline     |
+                                      |  (19,319 Events / 10 Types) |
+                                      +--------------+--------------+
+                                                     |
+                  +----------------------------------+----------------------------------+
+                  |                                  |                                  |
+                  v                                  v                                  v
++----------------------------------+ +----------------------------------+ +----------------------------------+
+|      Work 04: Feature Identity   | |   Work 05: Temporal Knowledge    | |     Work 06: Historical AI QA    |
+|        & Entity Resolution       | |              Graph               | |               Engine             |
+| - Canonical Features & Categories| | - Multi-Hop BFS Traversal Engine | | - Natural Language Intent Parser |
+| - Dynamic Alias Resolution       | | - Graph Nodes (Feature, Issue,   | | - Entity Resolution Integration  |
+| - Rename & Succession Tracking   | |   Commit, Event, Contributor)    | | - Evidence-Grounded Synthesis    |
+| - Traceable Record Links         | | - Time Slicing & Neighborhoods   | | - Verifiable SHA-256 Citations   |
++----------------------------------+ +----------------------------------+ +----------------------------------+
+                  |                                  |                                  |
+                  +----------------------------------+----------------------------------+
+                                                     |
+                                                     v
+                                      +-----------------------------+
+                                      |   Unified Web Dashboard     |
+                                      |    (/dashboard & /docs)     |
+                                      +-----------------------------+
+```
+
+---
+
 ## Key Capabilities
 
-1. **Deterministic & Conservative Temporal Event Extraction**:
+1. **Deterministic & Conservative Temporal Event Extraction (Work 03)**:
    - Identifies product events using 10 taxonomy types across issues, comments, and commits.
    - Guarded against false positives with strict **negation filtering** ("not approved", "do not merge"), **conditional handling** ("would approve if"), **bot comment filtering** (e.g. `githubbot`), and **quote omission**.
    - Preserves missing timestamps as `NULL` without fabricating timestamps.
+   - Enforces strict verbatim substring verification against immutable `SourceRecord.raw_data` with SHA-256 hashes.
 
-2. **Verifiable Evidence Provenance**:
-   - Every accepted event links directly to at least one `EventEvidence` record.
-   - Enforces strict verbatim substring verification against immutable `SourceRecord.raw_data`.
-   - Generates SHA-256 evidence integrity hashes.
+2. **Feature Identity & Entity Resolution (Work 04)**:
+   - Canonical feature entities with category classification (`CORE`, `CLIENT`, `STREAMS`, `CONNECT`, `STORAGE`, `SECURITY`, `TOOLS`).
+   - Layered fuzzy and deterministic matching resolving variations, acronyms, and Kafka Improvement Proposals (KIPs).
+   - Historical rename and succession tracking (e.g., ZooKeeper $\to$ KRaft Mode, legacy MirrorMaker $\to$ MirrorMaker 2.0).
+   - Traceable, bidirectional record links across Jira issues, Git commits, and temporal events.
 
-3. **Hybrid & Pluggable Architecture**:
-   - Clean abstraction for optional LLM-assisted candidate extraction (OpenAI, Anthropic, or local model).
-   - Functions 100% on deterministic extractors alone when unconfigured.
-   - Candidates must still pass through strict `EvidenceValidator` before promotion.
+3. **Temporal Knowledge Graph (Work 05)**:
+   - Rich multi-entity graph schema: `FEATURE`, `ISSUE`, `COMMIT`, `TEMPORAL_EVENT`, `CONTRIBUTOR`, and `EVIDENCE`.
+   - Multi-hop traversal engine with cycle detection, depth limits, and max node boundaries.
+   - Temporal slicing: examine the topological state of product knowledge within specific historical time windows.
 
-4. **Interactive Web Dashboard UI**:
-   - **Overview Tab**: Live dataset statistics, candidates breakdown, taxonomy distribution, latest extraction run metrics.
-   - **Event Explorer Tab**: Filterable table of temporal events with pagination.
-   - **Evidence Inspector Modal**: One-click modal displaying verbatim source text, role, and SHA-256 hash.
-   - **Issue Timeline Tab**: Chronological reconstruction of any issue from creation to resolution.
-   - **Extraction Engine Tab**: Interactive controls to trigger runs and view historical run logs.
+4. **Historical Natural-Language Question Answering (Work 06)**:
+   - Answers complex architectural, attribution, and lifecycle questions with zero hallucinations.
+   - Dual-mode synthesis: deterministic grounded synthesis with automatic fallback when LLM API keys are unconfigured.
+   - Grounded citations linking directly to raw source record IDs and SHA-256 verification hashes.
+
+5. **Integrated Web Dashboard UI**:
+   - **Overview Tab**: Live metrics, taxonomy distribution, and graph topology overview.
+   - **Features Tab**: Searchable catalog of canonical features with aliases and observed lifespans.
+   - **Knowledge Graph Tab**: Interactive SVG visualization of multi-hop entity networks with node inspector.
+   - **Historical QA Tab**: One-click benchmark questions and custom natural-language query input.
+   - **Events Tab**: Filterable table of 19,319 verified temporal events with pagination.
+   - **Timeline Tab**: Issue lifecycle reconstruction from inception to resolution.
+   - **Extraction Tab**: Interactive controls to trigger runs and view historical run logs.
 
 ---
 
@@ -59,7 +112,7 @@ The **Temporal Product Knowledge System** reconstructs how software products evo
 ```bash
 # Clone the repository
 git clone https://github.com/thabishgafar10/H4H003.git
-cd H4H003
+cd Temporal-PK
 
 # Create and activate virtual environment
 python -m venv venv
@@ -68,7 +121,7 @@ source venv/bin/activate  # Or venv\Scripts\activate on Windows
 # Install dependencies
 pip install -r requirements.txt
 
-# Run migrations
+# Run migrations (001, 002, 003)
 python backend/migrations/runner.py
 
 # Start the application
@@ -90,16 +143,27 @@ docker compose up -d --build
 
 ## API Reference
 
-### Core & Extraction Routes
-- `POST /api/extraction/run`: Trigger extraction across issues, comments, and commits.
-- `GET /api/extraction/status`: Get status and metrics of the latest run.
-- `GET /api/extraction/statistics`: Summary statistics of candidates, events, and evidence.
-- `GET /api/extraction/runs`: List historical extraction runs with pagination.
-- `GET /api/extraction/candidates`: Query proposed candidates by status and confidence.
+### Feature Identity Routes (Work 04)
+- `GET /api/features`: List canonical features with aliases and observed ranges.
+- `GET /api/features/{id}`: Detailed view of a canonical feature and its record links.
+- `GET /api/features/{id}/history`: Chronological event history for a feature.
+- `POST /api/features/resolve`: Multi-layer entity resolution from natural-language text.
+- `POST /api/features/seed`: Idempotent seeder for canonical features and links.
 
-### Temporal Events & Evidence Routes
+### Knowledge Graph Routes (Work 05)
+- `GET /api/graph/features/{feature_id}`: Returns subgraph centered on a feature.
+- `GET /api/graph/nodes/{node_type}/{node_id}`: Subgraph centered on any arbitrary node.
+- `POST /api/graph/query`: Parameterized multi-hop traversal with time filtering.
+- `GET /api/graph/stats`: High-level graph topology metrics and entity distribution.
+
+### Historical Question Answering Routes (Work 06)
+- `POST /api/qa/ask`: Natural-language question answering with timeline and citations.
+- `GET /api/qa/sample-questions`: Curated benchmark questions showcasing temporal reasoning.
+- `GET /api/qa/health`: QA engine status and benchmark catalog count.
+
+### Temporal Events & Evidence Routes (Work 03)
 - `GET /api/events`: Query temporal events with filtering by `event_type`, `issue_id`, `actor`, and date range.
-- `GET /api/events/{id}`: Detailed view of a temporal event and all attached verbatim evidence links.
+- `GET /api/events/{id}`: Detailed view of a temporal event and attached evidence links.
 - `GET /api/events/issues/{issue_id}/timeline`: Full chronological timeline of an issue.
 - `GET /api/events/taxonomy`: List of all 10 event types with descriptions.
 
@@ -107,17 +171,15 @@ docker compose up -d --build
 
 ## Automated Test Suite
 
-The test suite contains **88 passing automated tests** covering:
-- Database migrations & repeatable schema transitions (Migrations 001 and 002).
-- SourceRecord provenance and 0-data-loss accounting.
-- Deterministic extractors (Issues, Comments, Commits).
-- Negative test cases: negation guards, conditionals, bot filtering, quote omission.
-- Evidence validator verbatim substring verification and SHA-256 integrity.
-- Pluggable LLM extractor HTTP client request dispatch & JSON schema parsing.
-- Idempotent repeated extraction runs.
-- REST API endpoints and Web Dashboard routes.
+The test suite contains **113 passing automated tests**:
+- **Work 02 (Data Ingestion & Integrity)**: 70 tests (SourceRecord provenance, SHA-256 hashes, zero data loss, migrations).
+- **Work 03 (Temporal Event Extraction)**: 18 tests (10 taxonomy types, negative guards, evidence validator, LLM dispatch).
+- **Work 04 (Feature Identity & Entity Resolution)**: 8 tests (normalization, canonical features, KIP matching, fuzzy similarity, renames).
+- **Work 05 (Knowledge Graph Engine)**: 6 tests (multi-hop traversal, depth bounds, time slicing, node neighborhoods).
+- **Work 06 (Historical Question Answering)**: 6 tests (intent parsing, attribution, chronological timelines, citations, fallbacks).
+- **End-to-End Acceptance**: 5 tests (complete full-stack user lifecycle verification).
 
-Run the test suite:
+Run the full test suite:
 ```bash
 python -m pytest backend/tests -v
 ```

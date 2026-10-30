@@ -1,7 +1,7 @@
 # Deployment & Operational Guide
 ## Temporal Product Knowledge System
 
-The **Temporal Product Knowledge System** extracts, reconstructs, and queries the evolution of software products by connecting historical engineering records (issues, comments, commits, code changes) with verifiable evidence provenance.
+The **Temporal Product Knowledge System** extracts, reconstructs, and queries the evolution of software products by connecting historical engineering records (issues, comments, commits, code changes) with verifiable evidence provenance, canonical feature identities, multi-hop knowledge graphs, and historical natural-language question answering.
 
 ---
 
@@ -9,13 +9,17 @@ The **Temporal Product Knowledge System** extracts, reconstructs, and queries th
 
 - **Backend**: FastAPI (Python 3.12)
 - **Database**: SQLite with foreign key enforcement and transactional migration runner
-- **UI Dashboard**: Built-in responsive Single Page Application served from `/dashboard`
+- **UI Dashboard**: Built-in responsive Single Page Application served from `/dashboard` and `/app`
 - **Data Layers**:
   - `SourceRecord`: Verbatim JSON snapshot of original source records (e.g. Apache Kafka engineering history).
   - `Domain Normalized Entities`: Issues, Comments, Commits, Code Changes, Issue Components, Fix Versions.
   - `EventCandidates`: Extracted candidates evaluated against taxonomy and conservative guardrails.
-  - `TemporalEvents`: Accepted, deduplicated historical product events.
+  - `TemporalEvents`: Accepted, deduplicated historical product events (19,319 verified events).
   - `EventEvidence`: Verifiable link between temporal events and exact verbatim source text with SHA-256 integrity hash.
+  - `Feature & FeatureAlias`: Canonical feature identities with dynamic aliases, KIPs, and rename tracking.
+  - `FeatureRecordLink`: Traceable provenance links connecting features to issues, commits, and events.
+  - `Knowledge Graph Engine`: Multi-hop BFS graph traversal engine with depth bounding and temporal slicing.
+  - `Historical QA Engine`: Natural language question answering grounded in chronological events and evidence.
 
 ---
 
@@ -30,7 +34,7 @@ The **Temporal Product Knowledge System** extracts, reconstructs, and queries th
 ```bash
 # Clone repository
 git clone https://github.com/thabishgafar10/H4H003.git
-cd H4H003
+cd Temporal-PK
 
 # Create and activate virtual environment
 python -m venv venv
@@ -42,8 +46,11 @@ venv\Scripts\activate
 # Install dependencies
 pip install -r backend/requirements.txt
 
-# Execute database migrations
+# Execute database migrations (001, 002, 003)
 python backend/migrations/runner.py
+
+# Seed canonical feature identities and record links
+python backend/scripts/seed_features.py
 
 # Start application server
 uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port 8000 --reload
@@ -95,36 +102,49 @@ docker run -d \
    ```
 3. Configure Start Command:
    ```bash
-   python backend/migrations/runner.py && uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+   python backend/migrations/runner.py && python backend/scripts/seed_features.py && uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
    ```
 4. Configure Environment Variables:
    - `APP_ENV`: `production`
    - `SOURCE_DB_PATH`: `sample_data/raw/kafka.sqlite3`
    - `APP_DB_PATH`: `backend/data/temporal_knowledge.db`
-   - `LLM_API_KEY`: *(Optional)* API key for hybrid LLM-assisted candidate extraction.
-   - `LLM_MODEL`: *(Optional, default: `gpt-4o-mini`)*
+   - `GEMINI_API_KEY`: *(Optional)* API key for LLM-assisted question answering and extraction.
 
 ---
 
 ## 5. Verification & Smoke Testing
 
-Run the included automated verification script:
+### Automated Test Suite Execution
 ```bash
-python -m pytest backend/tests/test_work03_extraction.py -v
+# Run the complete test suite (113 passing tests)
+python -m pytest backend/tests -v
 ```
 
 ### Smoke Test Endpoints
 ```bash
-# 1. Healthcheck
+# 1. System Healthcheck
 curl http://localhost:8000/health
 # Expected: {"status": "healthy"}
 
-# 2. Taxonomy Definition
-curl http://localhost:8000/api/events/taxonomy
+# 2. Canonical Features List
+curl http://localhost:8000/api/features
 
-# 3. Extraction Statistics
-curl "http://localhost:8000/api/extraction/statistics?dataset_name=KafkaSQLite"
+# 3. Layered Entity Resolution
+curl -X POST http://localhost:8000/api/features/resolve \
+  -H "Content-Type: application/json" \
+  -d '{"query": "KIP-500 Raft mode"}'
 
-# 4. Chronological Issue Timeline
-curl http://localhost:8000/api/events/issues/KAFKA-1/timeline
+# 4. Knowledge Graph Subgraph
+curl "http://localhost:8000/api/graph/features/1?depth=2&max_nodes=50"
+
+# 5. Graph Topology Statistics
+curl http://localhost:8000/api/graph/stats
+
+# 6. Historical Question Answering
+curl -X POST http://localhost:8000/api/qa/ask \
+  -H "Content-Type: application/json" \
+  -d '{"query": "Why and when was ZooKeeper replaced by KRaft Mode in Apache Kafka?"}'
+
+# 7. Curated Sample Questions Catalog
+curl http://localhost:8000/api/qa/sample-questions
 ```

@@ -32,6 +32,7 @@ def init_db(target_engine=None):
     from app.models.event_candidate import EventCandidate
     from app.models.temporal_event import TemporalEvent
     from app.models.event_evidence import EventEvidence
+    from app.models.feature import Feature, FeatureAlias, FeatureRecordLink
 
     eng = target_engine if target_engine is not None else engine
     Base.metadata.create_all(bind=eng)
