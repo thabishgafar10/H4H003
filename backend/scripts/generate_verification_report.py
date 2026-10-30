@@ -79,7 +79,7 @@ def run_ingestion_twice(db) -> tuple:
 def run_tests() -> str:
     """Run the pytest suite and capture output."""
     result = subprocess.run(
-        ["python", "-m", "pytest", "tests/", "-v", "--tb=short", "--no-header"],
+        [sys.executable, "-m", "pytest", "tests/", "-v", "--tb=short", "--no-header"],
         capture_output=True,
         text=True,
         cwd=str(backend_dir),

@@ -3,7 +3,7 @@ import hashlib
 import json
 import logging
 from datetime import datetime, timezone
-from typing import List, Dict, Any, Tuple, Optional
+from typing import List, Dict, Any, Tuple, Optional, Set
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 from app.models.source_record import SourceRecord
@@ -20,11 +20,23 @@ class IngestionService:
     def __init__(self, db: Session, source_db_path: str):
         self.db = db
         self.source_db_path = source_db_path
+        self.known_issue_ids: Set[str] = set()
+        self.known_commit_hashes: Set[str] = set()
+
+    def _init_caches(self):
+        self.known_issue_ids = {
+            r[0] for r in self.db.query(Issue.source_issue_id).all() if r[0]
+        }
+        self.known_commit_hashes = {
+            r[0] for r in self.db.query(Commit.commit_hash).all() if r[0]
+        }
 
     def run_ingestion(self):
         batch = IngestionBatch(dataset_name="KafkaSQLite", status="RUNNING")
         self.db.add(batch)
         self.db.commit()
+
+        self._init_caches()
 
         try:
             conn = sqlite3.connect(f"file:{self.source_db_path}?mode=ro", uri=True)
@@ -52,26 +64,71 @@ class IngestionService:
             self.db.commit()
             return batch
         except Exception as e:
+            self.db.rollback()
             batch.status = "FAILED"
             batch.error_message = str(e)
             self.db.commit()
             raise e
 
-    def _process_table(self, cursor, table, batch):
+    def _process_table(self, cursor, table: str, batch: IngestionBatch):
         cursor.execute(f"SELECT * FROM {table}")
         rows = cursor.fetchall()
         column_names = [description[0] for description in cursor.description]
 
+        # Load existing source records for this table to enable O(1) checks
+        existing_sr = {
+            sr.source_record_id: (sr.id, sr.source_record_hash)
+            for sr in self.db.query(SourceRecord.source_record_id, SourceRecord.id, SourceRecord.source_record_hash)
+            .filter_by(dataset_name="KafkaSQLite", source_table=table)
+            .all()
+        }
+
+        # Cache existing relationships to avoid redundant queries / duplicates
+        existing_components = set()
+        existing_fix_versions = set()
+        existing_links = set()
+        existing_commit_links = set()
+
+        if table == "issue_component":
+            existing_components = {
+                (c.source_issue_id, c.component)
+                for c in self.db.query(IssueComponent.source_issue_id, IssueComponent.component).all()
+            }
+        elif table == "issue_fix_version":
+            existing_fix_versions = {
+                (f.source_issue_id, f.fix_version)
+                for f in self.db.query(IssueFixVersion.source_issue_id, IssueFixVersion.fix_version).all()
+            }
+        elif table == "issue_link":
+            existing_links = {
+                (l.source_issue_id, l.target_issue_id, l.link_name)
+                for l in self.db.query(IssueLink.source_issue_id, IssueLink.target_issue_id, IssueLink.link_name).all()
+            }
+        elif table == "change_set_link":
+            existing_commit_links = {
+                (cl.commit_hash, cl.source_issue_id)
+                for cl in self.db.query(CommitIssueLink.commit_hash, CommitIssueLink.source_issue_id).all()
+            }
+
+        uncommitted_count = 0
+
         for row in rows:
             data = dict(zip(column_names, row))
-            record_id = self._ingest_record(table, data, batch)
-            self._map_to_application_models(table, data, record_id, batch)
+            record_id, status = self._ingest_record_cached(table, data, batch, existing_sr)
+            if status != "skipped":
+                self._map_to_application_models_cached(
+                    table, data, record_id, batch, status,
+                    existing_components, existing_fix_versions, existing_links, existing_commit_links
+                )
+            uncommitted_count += 1
+            if uncommitted_count >= 1000:
+                self.db.commit()
+                uncommitted_count = 0
+
+        if uncommitted_count > 0:
+            self.db.commit()
 
     def _make_source_id(self, table: str, data: dict) -> str:
-        """
-        Produce a stable, human-readable source record ID for each table.
-        Falls back to a deterministic hash of the full row when no natural key exists.
-        """
         if table == "issue":
             return str(data["issue_id"])
         elif table == "change_set":
@@ -83,8 +140,11 @@ class IngestionService:
         elif table == "issue_fix_version":
             return f"{data.get('issue_id')}::{data.get('fix_version')}"
         elif table == "issue_comment":
-            # Comments have no surrogate key; use composite of issue_id + username + created_date
-            return f"{data.get('issue_id')}::{data.get('username')}::{data.get('created_date')}"
+            # Composite of issue_id + username + created_date + message hash to prevent collapsing
+            # distinct comments made within the same millisecond by the same bot/user
+            msg = str(data.get("message") or "")
+            msg_hash = hashlib.sha256(msg.encode("utf-8")).hexdigest()[:12]
+            return f"{data.get('issue_id')}::{data.get('username')}::{data.get('created_date')}::{msg_hash}"
         elif table == "issue_link":
             return (
                 f"{data.get('source_issue_id')}::{data.get('target_issue_id')}"
@@ -95,31 +155,29 @@ class IngestionService:
         elif table == "code_change":
             return f"{data.get('commit_hash')}::{data.get('file_path')}::{data.get('change_type')}"
         else:
-            # Generic fallback: SHA-256 of sorted row
             row_json = json.dumps(data, sort_keys=True, default=str)
             return hashlib.sha256(row_json.encode()).hexdigest()[:32]
 
-    def _ingest_record(self, table: str, data: dict, batch) -> int:
+    def _ingest_record_cached(
+        self, table: str, data: dict, batch: IngestionBatch, existing_sr: Dict[str, Tuple[int, str]]
+    ) -> Tuple[int, str]:
         record_json = json.dumps(data, sort_keys=True, default=str)
         record_hash = hashlib.sha256(record_json.encode()).hexdigest()
         source_id = self._make_source_id(table, data)
 
-        existing = self.db.query(SourceRecord).filter_by(
-            dataset_name="KafkaSQLite",
-            source_table=table,
-            source_record_id=source_id,
-        ).first()
-
-        if existing:
-            if existing.source_record_hash == record_hash:
+        if source_id in existing_sr:
+            sr_id, old_hash = existing_sr[source_id]
+            if old_hash == record_hash:
                 batch.records_skipped += 1
-                return existing.id
+                return sr_id, "skipped"
             else:
-                existing.source_record_hash = record_hash
-                existing.raw_data = data
+                existing = self.db.query(SourceRecord).filter_by(id=sr_id).first()
+                if existing:
+                    existing.source_record_hash = record_hash
+                    existing.raw_data = data
+                existing_sr[source_id] = (sr_id, record_hash)
                 batch.records_updated += 1
-                self.db.flush()
-                return existing.id
+                return sr_id, "updated"
 
         sr = SourceRecord(
             dataset_name="KafkaSQLite",
@@ -128,33 +186,29 @@ class IngestionService:
             source_record_hash=record_hash,
             raw_data=data,
             ingestion_batch_id=batch.id,
-            # Preserve source timestamps where available
             source_created_at=self._parse_date(
-                data.get("created_date") or data.get("committed_date")
+                data.get("created_date_zoned") or data.get("created_date") or
+                data.get("committed_date_zoned") or data.get("committed_date")
             ),
-            source_updated_at=self._parse_date(data.get("updated_date")),
+            source_updated_at=self._parse_date(
+                data.get("updated_date_zoned") or data.get("updated_date")
+            ),
         )
         self.db.add(sr)
         self.db.flush()
+        existing_sr[source_id] = (sr.id, record_hash)
         batch.records_inserted += 1
         batch.records_processed += 1
-        return sr.id
+        return sr.id, "inserted"
 
     def _parse_date(self, date_str: Optional[str]) -> Optional[datetime]:
-        """
-        Parse ISO 8601 date strings. Timezone offsets are preserved.
-        Returns None for missing or unparseable values.
-        Original string is always stored unchanged in raw_data.
-        """
         if not date_str:
             return None
-        # Normalise the trailing Z to explicit UTC offset
-        normalised = date_str.strip().replace("Z", "+00:00")
+        normalised = str(date_str).strip().replace("Z", "+00:00")
         try:
             return datetime.fromisoformat(normalised)
         except ValueError:
             pass
-        # Secondary fallback formats
         for fmt in (
             "%Y-%m-%dT%H:%M:%S.%f%z",
             "%Y-%m-%dT%H:%M:%S%z",
@@ -164,57 +218,66 @@ class IngestionService:
             "%Y-%m-%d",
         ):
             try:
-                return datetime.strptime(date_str.strip(), fmt)
+                return datetime.strptime(str(date_str).strip(), fmt)
             except ValueError:
                 continue
         logger.warning(f"Could not parse date string: {date_str!r}")
         return None
 
     # ------------------------------------------------------------------
-    # Application-model mapping
+    # Application-model mapping (Cached)
     # ------------------------------------------------------------------
 
-    def _map_to_application_models(self, table: str, data: dict, record_id: int, batch) -> None:
+    def _map_to_application_models_cached(
+        self, table: str, data: dict, record_id: int, batch: IngestionBatch, status: str,
+        existing_components: Set, existing_fix_versions: Set, existing_links: Set, existing_commit_links: Set
+    ) -> None:
         try:
             if table == "issue":
-                self._upsert_issue(data, record_id)
+                self._upsert_issue(data, record_id, status)
+                self.known_issue_ids.add(data.get("issue_id"))
 
             elif table == "change_set":
-                self._upsert_commit(data, record_id)
+                self._upsert_commit(data, record_id, status)
+                self.known_commit_hashes.add(data.get("commit_hash"))
 
             elif table == "issue_comment":
-                self._insert_issue_comment(data, record_id, batch)
+                self._insert_issue_comment_fast(data, record_id, batch, status)
 
             elif table == "issue_component":
-                self._insert_issue_component(data, record_id, batch)
+                self._insert_issue_component_fast(data, record_id, batch, status, existing_components)
 
             elif table == "issue_fix_version":
-                self._insert_issue_fix_version(data, record_id, batch)
+                self._insert_issue_fix_version_fast(data, record_id, batch, status, existing_fix_versions)
 
             elif table == "issue_link":
-                self._insert_issue_link(data, record_id, batch)
+                self._insert_issue_link_fast(data, record_id, batch, status, existing_links)
 
             elif table == "change_set_link":
-                self._insert_commit_issue_link(data, record_id, batch)
+                self._insert_commit_issue_link_fast(data, record_id, batch, status, existing_commit_links)
 
             elif table == "code_change":
-                self._insert_code_change(data, record_id, batch)
-
-            self.db.commit()
+                self._insert_code_change_fast(data, record_id, batch, status)
 
         except IntegrityError:
-            # Unique constraint violation on idempotent re-run — safe to skip
             self.db.rollback()
         except Exception as e:
             self.db.rollback()
             logger.warning(f"Error mapping record in table {table}: {e}")
 
+    # Compatibility methods for tests calling private methods directly
+    def _ingest_record(self, table: str, data: dict, batch: IngestionBatch) -> int:
+        record_id, _ = self._ingest_record_cached(table, data, batch, {})
+        return record_id
+
+    def _map_to_application_models(self, table: str, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._map_to_application_models_cached(table, data, record_id, batch, "inserted", set(), set(), set(), set())
+
     # ---- per-entity helpers ----
 
-    def _upsert_issue(self, data: dict, record_id: int) -> None:
+    def _upsert_issue(self, data: dict, record_id: int, status: str) -> None:
         issue_id = data.get("issue_id")
-        existing = self.db.query(Issue).filter_by(source_issue_id=issue_id).first()
-        if not existing:
+        if status == "inserted":
             issue = Issue(
                 source_issue_id=issue_id,
                 issue_type=data.get("type"),
@@ -232,29 +295,23 @@ class IngestionService:
             )
             self.db.add(issue)
         else:
-            # Update mutable fields on a changed source record
-            existing.issue_type = data.get("type")
-            existing.summary = data.get("summary")
-            existing.description = data.get("description")
-            existing.priority = data.get("priority")
-            existing.status = data.get("status")
-            existing.resolution = data.get("resolution")
-            existing.assignee = data.get("assignee")
-            existing.reporter = data.get("reporter")
-            existing.created_at = self._parse_date(
-                data.get("created_date_zoned") or data.get("created_date")
-            )
-            existing.updated_at = self._parse_date(
-                data.get("updated_date_zoned") or data.get("updated_date")
-            )
-            existing.resolved_at = self._parse_date(
-                data.get("resolved_date_zoned") or data.get("resolved_date")
-            )
+            existing = self.db.query(Issue).filter_by(source_issue_id=issue_id).first()
+            if existing:
+                existing.issue_type = data.get("type")
+                existing.summary = data.get("summary")
+                existing.description = data.get("description")
+                existing.priority = data.get("priority")
+                existing.status = data.get("status")
+                existing.resolution = data.get("resolution")
+                existing.assignee = data.get("assignee")
+                existing.reporter = data.get("reporter")
+                existing.created_at = self._parse_date(data.get("created_date_zoned") or data.get("created_date"))
+                existing.updated_at = self._parse_date(data.get("updated_date_zoned") or data.get("updated_date"))
+                existing.resolved_at = self._parse_date(data.get("resolved_date_zoned") or data.get("resolved_date"))
 
-    def _upsert_commit(self, data: dict, record_id: int) -> None:
+    def _upsert_commit(self, data: dict, record_id: int, status: str) -> None:
         commit_hash = data.get("commit_hash")
-        existing = self.db.query(Commit).filter_by(commit_hash=commit_hash).first()
-        if not existing:
+        if status == "inserted":
             commit = Commit(
                 commit_hash=commit_hash,
                 message=data.get("message"),
@@ -268,29 +325,30 @@ class IngestionService:
             )
             self.db.add(commit)
         else:
-            existing.message = data.get("message")
-            existing.author = data.get("author")
-            existing.author_email = data.get("author_email")
-            existing.committed_at = self._parse_date(
-                data.get("committed_date_zoned") or data.get("committed_date")
-            )
-            existing.is_merge = bool(data.get("is_merge", 0))
+            existing = self.db.query(Commit).filter_by(commit_hash=commit_hash).first()
+            if existing:
+                existing.message = data.get("message")
+                existing.author = data.get("author")
+                existing.author_email = data.get("author_email")
+                existing.committed_at = self._parse_date(
+                    data.get("committed_date_zoned") or data.get("committed_date")
+                )
+                existing.is_merge = bool(data.get("is_merge", 0))
 
-    def _insert_issue_comment(self, data: dict, record_id: int, batch) -> None:
+    def _insert_issue_comment(self, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._insert_issue_comment_fast(data, record_id, batch, "inserted")
+
+    def _insert_issue_comment_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str) -> None:
         issue_id = data.get("issue_id")
-        issue_exists = self.db.query(Issue).filter_by(source_issue_id=issue_id).first()
-        if not issue_exists:
-            batch.unresolved_relationships += 1
-            logger.debug(f"Unresolved issue_comment → issue: {issue_id}")
-            return
+        if issue_id not in self.known_issue_ids:
+            # Fallback to query in case cache wasn't initialized or dynamic test
+            if not self.db.query(Issue).filter_by(source_issue_id=issue_id).first():
+                batch.unresolved_relationships += 1
+                logger.debug(f"Unresolved issue_comment -> issue: {issue_id}")
+                return
+            self.known_issue_ids.add(issue_id)
 
-        # Check for existing via source_record_id to avoid duplicates on re-run
-        existing = (
-            self.db.query(IssueComment)
-            .filter_by(source_record_id=record_id)
-            .first()
-        )
-        if not existing:
+        if status == "inserted":
             comment = IssueComment(
                 source_issue_id=issue_id,
                 username=data.get("username"),
@@ -303,69 +361,65 @@ class IngestionService:
             )
             self.db.add(comment)
 
-    def _insert_issue_component(self, data: dict, record_id: int, batch) -> None:
+    def _insert_issue_component(self, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._insert_issue_component_fast(data, record_id, batch, "inserted", set())
+
+    def _insert_issue_component_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str, existing_set: Set) -> None:
         issue_id = data.get("issue_id")
         component = data.get("component")
-        issue_exists = self.db.query(Issue).filter_by(source_issue_id=issue_id).first()
-        if not issue_exists:
-            batch.unresolved_relationships += 1
-            return
-        # UniqueConstraint will deduplicate; check first to avoid rollback overhead
-        existing = (
-            self.db.query(IssueComponent)
-            .filter_by(source_issue_id=issue_id, component=component)
-            .first()
-        )
-        if not existing:
+        if issue_id not in self.known_issue_ids:
+            if not self.db.query(Issue).filter_by(source_issue_id=issue_id).first():
+                batch.unresolved_relationships += 1
+                return
+            self.known_issue_ids.add(issue_id)
+
+        key = (issue_id, component)
+        if key not in existing_set:
             self.db.add(IssueComponent(
                 source_issue_id=issue_id,
                 component=component,
                 source_record_id=record_id,
             ))
+            existing_set.add(key)
 
-    def _insert_issue_fix_version(self, data: dict, record_id: int, batch) -> None:
+    def _insert_issue_fix_version(self, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._insert_issue_fix_version_fast(data, record_id, batch, "inserted", set())
+
+    def _insert_issue_fix_version_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str, existing_set: Set) -> None:
         issue_id = data.get("issue_id")
         fix_version = data.get("fix_version")
-        issue_exists = self.db.query(Issue).filter_by(source_issue_id=issue_id).first()
-        if not issue_exists:
-            batch.unresolved_relationships += 1
-            return
-        existing = (
-            self.db.query(IssueFixVersion)
-            .filter_by(source_issue_id=issue_id, fix_version=fix_version)
-            .first()
-        )
-        if not existing:
+        if issue_id not in self.known_issue_ids:
+            if not self.db.query(Issue).filter_by(source_issue_id=issue_id).first():
+                batch.unresolved_relationships += 1
+                return
+            self.known_issue_ids.add(issue_id)
+
+        key = (issue_id, fix_version)
+        if key not in existing_set:
             self.db.add(IssueFixVersion(
                 source_issue_id=issue_id,
                 fix_version=fix_version,
                 source_record_id=record_id,
             ))
+            existing_set.add(key)
 
-    def _insert_issue_link(self, data: dict, record_id: int, batch) -> None:
+    def _insert_issue_link(self, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._insert_issue_link_fast(data, record_id, batch, "inserted", set())
+
+    def _insert_issue_link_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str, existing_set: Set) -> None:
         source_id = data.get("source_issue_id")
         target_id = data.get("target_issue_id")
         link_name = data.get("name")
-        src_exists = self.db.query(Issue).filter_by(source_issue_id=source_id).first()
-        tgt_exists = self.db.query(Issue).filter_by(source_issue_id=target_id).first()
-        if not src_exists:
+
+        src_exists = (source_id in self.known_issue_ids) or bool(self.db.query(Issue).filter_by(source_issue_id=source_id).first())
+        tgt_exists = (target_id in self.known_issue_ids) or bool(self.db.query(Issue).filter_by(source_issue_id=target_id).first())
+
+        if not src_exists or not tgt_exists:
             batch.unresolved_relationships += 1
-            logger.debug(f"Unresolved issue_link source: {source_id}")
             return
-        if not tgt_exists:
-            batch.unresolved_relationships += 1
-            logger.debug(f"Unresolved issue_link target: {target_id}")
-            return
-        existing = (
-            self.db.query(IssueLink)
-            .filter_by(
-                source_issue_id=source_id,
-                target_issue_id=target_id,
-                link_name=link_name,
-            )
-            .first()
-        )
-        if not existing:
+
+        key = (source_id, target_id, link_name)
+        if key not in existing_set:
             self.db.add(IssueLink(
                 source_issue_id=source_id,
                 target_issue_id=target_id,
@@ -374,46 +428,43 @@ class IngestionService:
                 is_containment=bool(data.get("is_containment", 0)),
                 source_record_id=record_id,
             ))
+            existing_set.add(key)
 
-    def _insert_commit_issue_link(self, data: dict, record_id: int, batch) -> None:
+    def _insert_commit_issue_link(self, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._insert_commit_issue_link_fast(data, record_id, batch, "inserted", set())
+
+    def _insert_commit_issue_link_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str, existing_set: Set) -> None:
         commit_hash = data.get("commit_hash")
         issue_id = data.get("issue_id")
-        commit_exists = self.db.query(Commit).filter_by(commit_hash=commit_hash).first()
-        issue_exists = self.db.query(Issue).filter_by(source_issue_id=issue_id).first()
-        if not commit_exists:
+
+        commit_exists = (commit_hash in self.known_commit_hashes) or bool(self.db.query(Commit).filter_by(commit_hash=commit_hash).first())
+        issue_exists = (issue_id in self.known_issue_ids) or bool(self.db.query(Issue).filter_by(source_issue_id=issue_id).first())
+
+        if not commit_exists or not issue_exists:
             batch.unresolved_relationships += 1
-            logger.debug(f"Unresolved change_set_link commit: {commit_hash}")
             return
-        if not issue_exists:
-            batch.unresolved_relationships += 1
-            logger.debug(f"Unresolved change_set_link issue: {issue_id}")
-            return
-        existing = (
-            self.db.query(CommitIssueLink)
-            .filter_by(commit_hash=commit_hash, source_issue_id=issue_id)
-            .first()
-        )
-        if not existing:
+
+        key = (commit_hash, issue_id)
+        if key not in existing_set:
             self.db.add(CommitIssueLink(
                 commit_hash=commit_hash,
                 source_issue_id=issue_id,
                 source_record_id=record_id,
             ))
+            existing_set.add(key)
 
-    def _insert_code_change(self, data: dict, record_id: int, batch) -> None:
+    def _insert_code_change(self, data: dict, record_id: int, batch: IngestionBatch) -> None:
+        self._insert_code_change_fast(data, record_id, batch, "inserted")
+
+    def _insert_code_change_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str) -> None:
         commit_hash = data.get("commit_hash")
-        commit_exists = self.db.query(Commit).filter_by(commit_hash=commit_hash).first()
-        if not commit_exists:
-            batch.unresolved_relationships += 1
-            logger.debug(f"Unresolved code_change commit: {commit_hash}")
-            return
-        # Deduplicate by source_record_id
-        existing = (
-            self.db.query(CodeChange)
-            .filter_by(source_record_id=record_id)
-            .first()
-        )
-        if not existing:
+        if commit_hash not in self.known_commit_hashes:
+            if not self.db.query(Commit).filter_by(commit_hash=commit_hash).first():
+                batch.unresolved_relationships += 1
+                return
+            self.known_commit_hashes.add(commit_hash)
+
+        if status == "inserted":
             self.db.add(CodeChange(
                 commit_hash=commit_hash,
                 file_path=data.get("file_path"),
