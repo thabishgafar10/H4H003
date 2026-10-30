@@ -1,3 +1,4 @@
+from contextlib import asynccontextmanager
 from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
@@ -9,19 +10,21 @@ from app.api.extraction_routes import router as extraction_router
 from app.api.event_routes import router as event_router
 from app.db.database import init_db
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    init_db()
+    yield
+
 app = FastAPI(
     title="Temporal Product Knowledge System",
     description="API for extracting and querying temporal product evolution, decisions, and development events.",
-    version="0.2.0"
+    version="0.2.0",
+    lifespan=lifespan,
 )
 
 static_dir = Path(__file__).resolve().parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
-
-@app.on_event("startup")
-def startup_event():
-    init_db()
 
 app.include_router(router, prefix="/api", tags=["core"])
 app.include_router(ingestion_router, prefix="/api/ingestion", tags=["ingestion"])

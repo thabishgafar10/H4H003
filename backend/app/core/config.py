@@ -1,10 +1,12 @@
 import os
 from pathlib import Path
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+
     PROJECT_NAME: str = "Temporal Product Knowledge System"
-    VERSION: str = "0.1.0"
+    VERSION: str = "0.2.0"
 
     # Paths
     # config.py lives at: <repo_root>/backend/app/core/config.py
@@ -19,8 +21,5 @@ class Settings(BaseSettings):
         # Ensure data directory exists
         self.APP_DB_PATH.parent.mkdir(parents=True, exist_ok=True)
         return f"sqlite:///{self.APP_DB_PATH}"
-
-    class Config:
-        env_file = ".env"
 
 settings = Settings()

@@ -3,7 +3,7 @@
 
 [![Python 3.12](https://img.shields.io/badge/Python-3.12-blue.svg)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.110+-009688.svg)](https://fastapi.tiangolo.com)
-[![Tests](https://img.shields.io/badge/Tests-87%20passing-success.svg)](backend/tests/)
+[![Tests](https://img.shields.io/badge/Tests-88%20passing-success.svg)](backend/tests/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 The **Temporal Product Knowledge System** reconstructs how software products evolve over time using historical development records. It transforms raw issue trackers, architecture discussions, votes, and commit histories into a structured, queryable knowledge base of temporal product events backed by cryptographic verbatim evidence provenance.
@@ -107,12 +107,13 @@ docker compose up -d --build
 
 ## Automated Test Suite
 
-The test suite contains **87 passing automated tests** covering:
+The test suite contains **88 passing automated tests** covering:
 - Database migrations & repeatable schema transitions (Migrations 001 and 002).
 - SourceRecord provenance and 0-data-loss accounting.
 - Deterministic extractors (Issues, Comments, Commits).
 - Negative test cases: negation guards, conditionals, bot filtering, quote omission.
 - Evidence validator verbatim substring verification and SHA-256 integrity.
+- Pluggable LLM extractor HTTP client request dispatch & JSON schema parsing.
 - Idempotent repeated extraction runs.
 - REST API endpoints and Web Dashboard routes.
 

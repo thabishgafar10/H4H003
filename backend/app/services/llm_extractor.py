@@ -9,6 +9,7 @@ import os
 import json
 import logging
 from typing import List, Optional
+import httpx
 from pydantic import BaseModel, Field
 
 from app.models.issue_comment import IssueComment
@@ -63,8 +64,6 @@ class LLMExtractor:
             return []
 
         try:
-            # Here live provider invocation would happen via httpx
-            # For testing and pluggable execution, this delegates to internal call
             parsed_events = self._call_llm_provider(raw_msg, comment.source_issue_id)
             candidates: List[CandidatePayload] = []
 
@@ -116,8 +115,48 @@ class LLMExtractor:
 
     def _call_llm_provider(self, text: str, issue_id: str) -> List[LLMExtractedEvent]:
         """
-        Calls LLM provider with structured JSON schema.
+        Calls OpenAI/Ollama/compatible chat completions endpoint with structured JSON schema.
         Mockable in tests.
         """
-        # In a test environment or mock setup, this method can be patched
-        return []
+        if not self.is_available():
+            return []
+
+        url = f"{self.api_base.rstrip('/')}/chat/completions"
+        headers = {
+            "Authorization": f"Bearer {self.api_key}",
+            "Content-Type": "application/json",
+        }
+        prompt = (
+            "You are an expert software product historian analyzing development records. "
+            "Extract product evolution events from the comment below using this taxonomy:\n"
+            "- FEATURE_PROPOSED: new feature or KIP proposed\n"
+            "- DECISION_APPROVED: explicit approval (+1, LGTM, vote passed)\n"
+            "- CONCERN_RAISED: blocker, objection, or compatibility concern raised\n"
+            "- DECISION_REVERSED: prior decision or vote reversed/withdrawn\n\n"
+            "CRITICAL: The evidence_excerpt field MUST be an EXACT VERBATIM substring of the comment.\n"
+            "Return JSON in the format: {\"events\": [{\"event_type\": \"...\", \"subject\": \"...\", \"confidence_band\": \"HIGH|MEDIUM|LOW\", \"evidence_excerpt\": \"...\", \"reasoning\": \"...\"}]}"
+        )
+        payload = {
+            "model": self.model,
+            "messages": [
+                {"role": "system", "content": prompt},
+                {"role": "user", "content": f"Issue: {issue_id}\n\nComment:\n{text}"},
+            ],
+            "temperature": 0.1,
+            "response_format": {"type": "json_object"},
+        }
+
+        try:
+            with httpx.Client(timeout=15.0) as client:
+                res = client.post(url, headers=headers, json=payload)
+                if res.status_code != 200:
+                    logger.warning(f"LLM provider returned status {res.status_code}: {res.text[:200]}")
+                    return []
+                data = res.json()
+                content = data["choices"][0]["message"]["content"]
+                parsed = json.loads(content)
+                events_list = parsed.get("events", [])
+                return [LLMExtractedEvent(**item) for item in events_list if isinstance(item, dict)]
+        except Exception as e:
+            logger.warning(f"Failed to query LLM provider: {e}")
+            return []

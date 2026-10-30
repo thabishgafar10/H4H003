@@ -557,3 +557,29 @@ def test_api_endpoints_work03():
     dash_res = client.get("/dashboard")
     assert dash_res.status_code == 200
     assert "Temporal Product Knowledge" in dash_res.text
+
+
+def test_llm_extractor_call_provider_http_dispatch(monkeypatch):
+    """Verifies that _call_llm_provider constructs request and parses valid JSON response."""
+    import httpx
+    adapter = LLMExtractor(api_key="sk-test-key", api_base="https://api.mockllm.com/v1", model="test-model")
+
+    class MockResponse:
+        status_code = 200
+        text = '{"choices": [{"message": {"content": "{\\"events\\": [{\\"event_type\\": \\"DECISION_APPROVED\\", \\"subject\\": \\"Approved patch\\", \\"evidence_excerpt\\": \\"LGTM\\", \\"confidence_band\\": \\"HIGH\\"}]}"}}]}'
+
+        def json(self):
+            import json
+            return json.loads(self.text)
+
+    def mock_post(self_client, url, headers=None, json=None):
+        assert headers["Authorization"] == "Bearer sk-test-key"
+        assert json["model"] == "test-model"
+        return MockResponse()
+
+    monkeypatch.setattr(httpx.Client, "post", mock_post)
+
+    events = adapter._call_llm_provider("LGTM", "KAFKA-10")
+    assert len(events) == 1
+    assert events[0].event_type == EVENT_DECISION_APPROVED
+    assert events[0].evidence_excerpt == "LGTM"
