@@ -27,6 +27,14 @@ def init_db(target_engine=None):
     from app.models.code_change import CodeChange
     from app.models.issue_relationships import IssueComponent, IssueFixVersion, IssueLink, CommitIssueLink
     from app.models.ingestion_batch import IngestionBatch
+    from app.models.unresolved_relationship import UnresolvedRelationship
 
     eng = target_engine if target_engine is not None else engine
     Base.metadata.create_all(bind=eng)
+
+    if target_engine is None:
+        try:
+            from migrations.runner import run_all_migrations
+        except ModuleNotFoundError:
+            from backend.migrations.runner import run_all_migrations
+        run_all_migrations(settings.APP_DB_PATH)

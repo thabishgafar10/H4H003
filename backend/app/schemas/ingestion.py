@@ -38,3 +38,17 @@ class SystemStatisticsResponse(BaseModel):
     latest_ingestion_status: Optional[str] = None
     latest_ingestion_completed_at: Optional[datetime] = None
 
+class UnresolvedRelationshipResponse(BaseModel):
+    id: int
+    dataset_name: str
+    source_table: str
+    source_record_id: Optional[int] = None
+    source_id: str
+    target_type: str
+    target_id: str
+    reason: str
+    batch_id: Optional[int] = None
+    detected_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+

@@ -13,15 +13,18 @@ from app.models.commit import Commit
 from app.models.code_change import CodeChange
 from app.models.issue_relationships import IssueComponent, IssueFixVersion, IssueLink, CommitIssueLink
 from app.models.ingestion_batch import IngestionBatch
+from app.models.unresolved_relationship import UnresolvedRelationship
 from app.core.logging_config import logger
 
 
 class IngestionService:
-    def __init__(self, db: Session, source_db_path: str):
+    def __init__(self, db: Session, source_db_path: str, dataset_name: str = "KafkaSQLite"):
         self.db = db
         self.source_db_path = source_db_path
+        self.dataset_name = dataset_name
         self.known_issue_ids: Set[str] = set()
         self.known_commit_hashes: Set[str] = set()
+        self.unresolved_set: Set[Tuple[str, str, str, str]] = set()
 
     def _init_caches(self):
         self.known_issue_ids = {
@@ -30,9 +33,20 @@ class IngestionService:
         self.known_commit_hashes = {
             r[0] for r in self.db.query(Commit.commit_hash).all() if r[0]
         }
+        self.unresolved_set = {
+            (r[0], r[1], r[2], r[3])
+            for r in self.db.query(
+                UnresolvedRelationship.source_table,
+                UnresolvedRelationship.source_id,
+                UnresolvedRelationship.target_type,
+                UnresolvedRelationship.target_id,
+            )
+            .filter_by(dataset_name=self.dataset_name)
+            .all()
+        }
 
     def run_ingestion(self):
-        batch = IngestionBatch(dataset_name="KafkaSQLite", status="RUNNING")
+        batch = IngestionBatch(dataset_name=self.dataset_name, status="RUNNING")
         self.db.add(batch)
         self.db.commit()
 
@@ -40,35 +54,58 @@ class IngestionService:
 
         try:
             conn = sqlite3.connect(f"file:{self.source_db_path}?mode=ro", uri=True)
-            cursor = conn.cursor()
+            try:
+                cursor = conn.cursor()
 
-            # Import Order: parent tables before child tables
-            tables = [
-                "meta",
-                "issue",
-                "change_set",
-                "issue_comment",
-                "issue_component",
-                "issue_fix_version",
-                "issue_link",
-                "change_set_link",
-                "code_change",
-            ]
+                # Import Order: parent tables before child tables
+                tables = [
+                    "meta",
+                    "issue",
+                    "change_set",
+                    "issue_comment",
+                    "issue_component",
+                    "issue_fix_version",
+                    "issue_link",
+                    "change_set_link",
+                    "code_change",
+                ]
 
-            for table in tables:
-                self._process_table(cursor, table, batch)
+                for table in tables:
+                    self._process_table(cursor, table, batch)
+            finally:
+                conn.close()
 
-            conn.close()
             batch.status = "COMPLETED"
             batch.completed_at = datetime.now(timezone.utc)
+            # Dataset-level unresolved relationship count persisted to batch
+            batch.unresolved_relationships = (
+                self.db.query(UnresolvedRelationship)
+                .filter_by(dataset_name=self.dataset_name)
+                .count()
+            )
             self.db.commit()
             return batch
         except Exception as e:
             self.db.rollback()
             batch.status = "FAILED"
             batch.error_message = str(e)
+            batch.completed_at = datetime.now(timezone.utc)
+            batch.unresolved_relationships = (
+                self.db.query(UnresolvedRelationship)
+                .filter_by(dataset_name=self.dataset_name)
+                .count()
+            )
             self.db.commit()
             raise e
+
+    def get_unresolved_relationships(
+        self, dataset_name: Optional[str] = None, source_table: Optional[str] = None
+    ) -> List[UnresolvedRelationship]:
+        target_dataset = dataset_name or self.dataset_name
+        query = self.db.query(UnresolvedRelationship).filter_by(dataset_name=target_dataset)
+        if source_table:
+            query = query.filter_by(source_table=source_table)
+        return query.order_by(UnresolvedRelationship.id).all()
 
     def _process_table(self, cursor, table: str, batch: IngestionBatch):
         cursor.execute(f"SELECT * FROM {table}")
@@ -79,7 +116,7 @@ class IngestionService:
         existing_sr = {
             sr.source_record_id: (sr.id, sr.source_record_hash)
             for sr in self.db.query(SourceRecord.source_record_id, SourceRecord.id, SourceRecord.source_record_hash)
-            .filter_by(dataset_name="KafkaSQLite", source_table=table)
+            .filter_by(dataset_name=self.dataset_name, source_table=table)
             .all()
         }
 
@@ -169,6 +206,7 @@ class IngestionService:
             sr_id, old_hash = existing_sr[source_id]
             if old_hash == record_hash:
                 batch.records_skipped += 1
+                batch.records_processed += 1
                 return sr_id, "skipped"
             else:
                 existing = self.db.query(SourceRecord).filter_by(id=sr_id).first()
@@ -177,10 +215,11 @@ class IngestionService:
                     existing.raw_data = data
                 existing_sr[source_id] = (sr_id, record_hash)
                 batch.records_updated += 1
+                batch.records_processed += 1
                 return sr_id, "updated"
 
         sr = SourceRecord(
-            dataset_name="KafkaSQLite",
+            dataset_name=batch.dataset_name or self.dataset_name,
             source_table=table,
             source_record_id=source_id,
             source_record_hash=record_hash,
@@ -223,6 +262,34 @@ class IngestionService:
                 continue
         logger.warning(f"Could not parse date string: {date_str!r}")
         return None
+
+    def _record_unresolved_relationship(
+        self,
+        table: str,
+        source_id: str,
+        record_id: int,
+        target_type: str,
+        target_id: str,
+        reason: str,
+        batch: IngestionBatch,
+    ) -> None:
+        target_dataset = batch.dataset_name or self.dataset_name
+        key = (table, source_id, target_type, target_id)
+        if key in self.unresolved_set:
+            return
+        self.unresolved_set.add(key)
+        batch.unresolved_relationships = (batch.unresolved_relationships or 0) + 1
+        unres = UnresolvedRelationship(
+            dataset_name=target_dataset,
+            source_table=table,
+            source_record_id=record_id,
+            source_id=source_id,
+            target_type=target_type,
+            target_id=target_id,
+            reason=reason,
+            batch_id=batch.id,
+        )
+        self.db.add(unres)
 
     # ------------------------------------------------------------------
     # Application-model mapping (Cached)
@@ -341,9 +408,12 @@ class IngestionService:
     def _insert_issue_comment_fast(self, data: dict, record_id: int, batch: IngestionBatch, status: str) -> None:
         issue_id = data.get("issue_id")
         if issue_id not in self.known_issue_ids:
-            # Fallback to query in case cache wasn't initialized or dynamic test
             if not self.db.query(Issue).filter_by(source_issue_id=issue_id).first():
-                batch.unresolved_relationships += 1
+                source_id = self._make_source_id("issue_comment", data)
+                self._record_unresolved_relationship(
+                    "issue_comment", source_id, record_id, "issue", issue_id,
+                    f"Referenced issue '{issue_id}' not found", batch
+                )
                 logger.debug(f"Unresolved issue_comment -> issue: {issue_id}")
                 return
             self.known_issue_ids.add(issue_id)
@@ -369,7 +439,11 @@ class IngestionService:
         component = data.get("component")
         if issue_id not in self.known_issue_ids:
             if not self.db.query(Issue).filter_by(source_issue_id=issue_id).first():
-                batch.unresolved_relationships += 1
+                source_id = f"{issue_id}::{component}"
+                self._record_unresolved_relationship(
+                    "issue_component", source_id, record_id, "issue", issue_id,
+                    f"Referenced issue '{issue_id}' not found", batch
+                )
                 return
             self.known_issue_ids.add(issue_id)
 
@@ -390,7 +464,11 @@ class IngestionService:
         fix_version = data.get("fix_version")
         if issue_id not in self.known_issue_ids:
             if not self.db.query(Issue).filter_by(source_issue_id=issue_id).first():
-                batch.unresolved_relationships += 1
+                source_id = f"{issue_id}::{fix_version}"
+                self._record_unresolved_relationship(
+                    "issue_fix_version", source_id, record_id, "issue", issue_id,
+                    f"Referenced issue '{issue_id}' not found", batch
+                )
                 return
             self.known_issue_ids.add(issue_id)
 
@@ -414,8 +492,19 @@ class IngestionService:
         src_exists = (source_id in self.known_issue_ids) or bool(self.db.query(Issue).filter_by(source_issue_id=source_id).first())
         tgt_exists = (target_id in self.known_issue_ids) or bool(self.db.query(Issue).filter_by(source_issue_id=target_id).first())
 
+        source_id_ref = f"{source_id}::{target_id}::{link_name}"
+
         if not src_exists or not tgt_exists:
-            batch.unresolved_relationships += 1
+            if not src_exists:
+                self._record_unresolved_relationship(
+                    "issue_link", source_id_ref, record_id, "issue", source_id,
+                    f"Referenced source issue '{source_id}' not found in issues table", batch
+                )
+            if not tgt_exists:
+                self._record_unresolved_relationship(
+                    "issue_link", source_id_ref, record_id, "issue", target_id,
+                    f"Referenced target issue '{target_id}' not found in issues table", batch
+                )
             return
 
         key = (source_id, target_id, link_name)
@@ -440,8 +529,19 @@ class IngestionService:
         commit_exists = (commit_hash in self.known_commit_hashes) or bool(self.db.query(Commit).filter_by(commit_hash=commit_hash).first())
         issue_exists = (issue_id in self.known_issue_ids) or bool(self.db.query(Issue).filter_by(source_issue_id=issue_id).first())
 
+        source_id_ref = f"{commit_hash}::{issue_id}"
+
         if not commit_exists or not issue_exists:
-            batch.unresolved_relationships += 1
+            if not commit_exists:
+                self._record_unresolved_relationship(
+                    "change_set_link", source_id_ref, record_id, "commit", commit_hash,
+                    f"Referenced commit '{commit_hash}' not found", batch
+                )
+            if not issue_exists:
+                self._record_unresolved_relationship(
+                    "change_set_link", source_id_ref, record_id, "issue", issue_id,
+                    f"Referenced issue '{issue_id}' not found", batch
+                )
             return
 
         key = (commit_hash, issue_id)
@@ -460,7 +560,11 @@ class IngestionService:
         commit_hash = data.get("commit_hash")
         if commit_hash not in self.known_commit_hashes:
             if not self.db.query(Commit).filter_by(commit_hash=commit_hash).first():
-                batch.unresolved_relationships += 1
+                source_id = f"{commit_hash}::{data.get('file_path')}::{data.get('change_type')}"
+                self._record_unresolved_relationship(
+                    "code_change", source_id, record_id, "commit", commit_hash,
+                    f"Referenced commit '{commit_hash}' not found", batch
+                )
                 return
             self.known_commit_hashes.add(commit_hash)
 

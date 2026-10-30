@@ -8,6 +8,7 @@ from app.models.source_record import SourceRecord
 from app.models.issue_comment import IssueComment
 from app.models.code_change import CodeChange
 from app.models.issue_relationships import IssueComponent, IssueFixVersion, IssueLink, CommitIssueLink
+from app.models.unresolved_relationship import UnresolvedRelationship
 from app.schemas.issue import IssueResponse
 from app.schemas.commit import CommitResponse
 from app.schemas.ingestion import IngestionBatchResponse, SystemStatisticsResponse
@@ -18,11 +19,28 @@ router = APIRouter()
 
 
 @router.get("/statistics", response_model=SystemStatisticsResponse)
-def get_statistics(db: Session = Depends(get_db)):
-    latest = db.query(IngestionBatch).order_by(IngestionBatch.started_at.desc()).first()
-    total_unresolved = 0
-    if latest:
-        total_unresolved = latest.unresolved_relationships or 0
+def get_statistics(
+    dataset_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    batch_query = db.query(IngestionBatch)
+    if dataset_name:
+        batch_query = batch_query.filter(IngestionBatch.dataset_name == dataset_name)
+    latest = batch_query.order_by(IngestionBatch.started_at.desc()).first()
+
+    target_dataset = dataset_name if dataset_name else (latest.dataset_name if latest else "KafkaSQLite")
+
+    unres_query = db.query(UnresolvedRelationship)
+    if target_dataset:
+        unres_query = unres_query.filter(UnresolvedRelationship.dataset_name == target_dataset)
+    unresolved_count = unres_query.count()
+
+    if unresolved_count == 0 and latest and latest.dataset_name == target_dataset:
+        unresolved_count = latest.unresolved_relationships or 0
+
+    sr_query = db.query(SourceRecord)
+    if target_dataset:
+        sr_query = sr_query.filter(SourceRecord.dataset_name == target_dataset)
 
     stats = SystemStatisticsResponse(
         total_issues=db.query(Issue).count(),
@@ -33,8 +51,8 @@ def get_statistics(db: Session = Depends(get_db)):
         total_fix_version_mappings=db.query(IssueFixVersion).count(),
         total_issue_links=db.query(IssueLink).count(),
         total_commit_issue_links=db.query(CommitIssueLink).count(),
-        total_source_records=db.query(SourceRecord).count(),
-        unresolved_relationships=total_unresolved,
+        total_source_records=sr_query.count(),
+        unresolved_relationships=unresolved_count,
         latest_ingestion_status=latest.status if latest else None,
         latest_ingestion_completed_at=latest.completed_at if latest else None,
     )
