@@ -141,6 +141,53 @@ def test_04_knowledge_graph_rendering_and_node_inspector(browser_context):
 
     # Verify graph node count is intact or expanded
     assert page.locator("#graph-svg circle").count() >= 5
+
+    # Test Open Full Record Details on Feature
+    inspect_btn = page.locator("#btn-inspect-subdetail")
+    assert inspect_btn.is_visible()
+    inspect_btn.click()
+    page.wait_for_selector("#modal-feature-detail:not(.hidden)", timeout=4000)
+    assert page.locator("#feat-detail-title").inner_text() != ""
+    page.click("#modal-feature-detail button:has-text('Close')")
+    page.wait_for_selector("#modal-feature-detail", state="hidden", timeout=2000)
+
+    page.close()
+
+
+def test_04b_knowledge_graph_issue_and_commit_seeds(browser_context):
+    """Test Knowledge Graph rendering with ISSUE and COMMIT seeds, case insensitivity, and commit prefixes."""
+    page = browser_context.new_page()
+    page.goto(BASE_URL)
+    page.click("#tab-graph")
+    page.wait_for_selector("#graph-seed-type", timeout=5000)
+
+    # 1. Test Seed: ISSUE with lowercase 'kafka-10'
+    page.select_option("#graph-seed-type", "ISSUE")
+    page.fill("#graph-root-custom", "kafka-10")
+    page.click("button:has-text('Render Subgraph')")
+    page.wait_for_selector("#graph-svg circle", timeout=5000)
+
+    issue_nodes = page.locator("#graph-svg circle")
+    assert issue_nodes.count() >= 3, f"Expected >= 3 nodes for kafka-10, found {issue_nodes.count()}"
+    meta_text = page.locator("#graph-meta-counts").inner_text()
+    assert "0 nodes" not in meta_text
+
+    # 2. Test Seed: COMMIT with 'kafka-10' (user scenario where commit seed receives issue key)
+    page.select_option("#graph-seed-type", "COMMIT")
+    page.fill("#graph-root-custom", "kafka-10")
+    page.click("button:has-text('Render Subgraph')")
+    page.wait_for_selector("#graph-svg circle", timeout=5000)
+    commit_issue_nodes = page.locator("#graph-svg circle")
+    assert commit_issue_nodes.count() >= 3
+
+    # 3. Test Seed: COMMIT with short hash prefix '83b8cf96'
+    page.fill("#graph-root-custom", "83b8cf96")
+    page.click("button:has-text('Render Subgraph')")
+    page.wait_for_selector("#graph-svg circle", timeout=5000)
+    commit_nodes = page.locator("#graph-svg circle")
+    assert commit_nodes.count() >= 2
+
+    page.screenshot(path=os.path.join(SCREENSHOT_DIR, "04b_knowledge_graph_custom_seeds.png"))
     page.close()
 
 
@@ -198,18 +245,25 @@ def test_06_event_explorer_and_provenance_modal(browser_context):
 
 
 def test_07_issue_timeline(browser_context):
-    """Test Issue Timeline chronological visualization."""
+    """Test Issue Timeline chronological visualization with lowercase search and quick chips."""
     page = browser_context.new_page()
     page.goto(BASE_URL)
     page.click("#tab-timeline")
     page.wait_for_selector("#timeline-search-issue", timeout=3000)
 
-    page.fill("#timeline-search-issue", "KAFKA-1")
+    # 1. Search lowercase kafka-10
+    page.fill("#timeline-search-issue", "kafka-10")
     page.click("button:has-text('Load Timeline')")
 
     page.wait_for_selector("#issue-timeline-container .relative", timeout=5000)
     items = page.locator("#issue-timeline-container .relative")
-    assert items.count() > 0
+    assert items.count() >= 3, f"Expected >= 3 timeline events for kafka-10, found {items.count()}"
+    assert "KAFKA-10" in page.locator("#timeline-issue-title").inner_text()
+
+    # 2. Test quick chip click (e.g. KAFKA-1)
+    page.click("#view-timeline button:has-text('KAFKA-1')")
+    page.wait_for_selector("#issue-timeline-container .relative", timeout=5000)
+    assert page.locator("#issue-timeline-container .relative").count() > 0
 
     page.screenshot(path=os.path.join(SCREENSHOT_DIR, "07_issue_timeline.png"))
     page.close()

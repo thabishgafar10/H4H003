@@ -5,6 +5,7 @@ API routes for querying Temporal Events, Evidence, and Issue Timelines.
 from datetime import datetime
 from typing import List, Optional
 from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
 from app.db.database import get_db
@@ -90,11 +91,12 @@ def get_issue_timeline(
     """
     Returns the complete chronological event timeline for a given issue.
     """
-    issue_q = db.query(Issue).filter(Issue.source_issue_id == issue_id)
+    cleaned_id = (issue_id or "").strip()
+    issue_q = db.query(Issue).filter(func.upper(Issue.source_issue_id) == cleaned_id.upper())
     ev_q = (
         db.query(TemporalEvent)
         .options(joinedload(TemporalEvent.evidence))
-        .filter(TemporalEvent.issue_id == issue_id)
+        .filter(func.upper(TemporalEvent.issue_id) == cleaned_id.upper())
     )
 
     if project_id and dataset_name:
@@ -118,14 +120,15 @@ def get_issue_timeline(
     issue = issue_q.first()
     if not issue:
         # Fallback for synthetic issues in tests
-        fallback = db.query(Issue).filter(Issue.source_issue_id == issue_id).first()
-        if fallback and not fallback.source_record_id:
+        fallback = db.query(Issue).filter(func.upper(Issue.source_issue_id) == cleaned_id.upper()).first()
+        if fallback and (not fallback.source_record_id or not project_id):
             issue = fallback
 
     events = ev_q.order_by(TemporalEvent.event_time.asc().nullslast(), TemporalEvent.id.asc()).all()
+    canonical_id = issue.source_issue_id if issue else cleaned_id.upper()
 
     return IssueTimelineResponse(
-        issue_id=issue_id,
+        issue_id=canonical_id,
         summary=issue.summary if issue else None,
         status=issue.status if issue else None,
         total_events=len(events),

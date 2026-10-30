@@ -6,6 +6,7 @@ and bounded-graph extraction across Features, Issues, Commits, Events, Contribut
 
 from datetime import datetime
 from typing import Dict, List, Optional, Set, Any
+from sqlalchemy import func
 from sqlalchemy.orm import Session
 
 from app.models.feature import Feature, FeatureAlias, FeatureRecordLink
@@ -57,14 +58,19 @@ class KnowledgeGraphService:
         edges_dict: Dict[str, GraphEdge] = {}
         visited_nodes: Set[str] = set()
 
-        root_id = self._make_node_id(req.start_node_type, req.start_node_id)
+        raw_type = (req.start_node_type or "").strip().upper()
+        raw_id = (req.start_node_id or "").strip()
+        root_id = self._make_node_id(raw_type, raw_id)
 
         # 1. Fetch and create root node
-        if req.start_node_type.upper() == "FEATURE":
-            feat_q = self.db.query(Feature).filter(Feature.id == int(req.start_node_id))
-            if self.project_id and req.dataset_name:
-                feat_q = feat_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == req.dataset_name))
-            elif self.project_id:
+        if raw_type == "FEATURE":
+            try:
+                feat_id = int(raw_id)
+            except ValueError:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            feat_q = self.db.query(Feature).filter(Feature.id == feat_id)
+            if self.project_id:
                 feat_q = feat_q.filter(Feature.project_id == self.project_id)
             elif req.dataset_name:
                 feat_q = feat_q.filter(Feature.dataset_name == req.dataset_name)
@@ -72,6 +78,7 @@ class KnowledgeGraphService:
             if not feat:
                 return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
 
+            root_id = self._make_node_id("feature", feat.id)
             nodes_dict[root_id] = GraphNode(
                 id=root_id,
                 type="FEATURE",
@@ -85,63 +92,199 @@ class KnowledgeGraphService:
                     "description": feat.description,
                 },
             )
-        elif req.start_node_type.upper() == "ISSUE":
+        elif raw_type == "ISSUE":
             issue_q = (
                 self.db.query(Issue)
                 .join(SourceRecord, Issue.source_record_id == SourceRecord.id)
-                .filter(Issue.source_issue_id == req.start_node_id)
+                .filter(func.upper(Issue.source_issue_id) == raw_id.upper())
             )
-            if self.project_id and req.dataset_name:
-                issue_q = issue_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
-            elif self.project_id:
+            if self.project_id:
                 issue_q = issue_q.filter(SourceRecord.project_id == self.project_id)
             elif req.dataset_name:
                 issue_q = issue_q.filter(SourceRecord.dataset_name == req.dataset_name)
             issue = issue_q.first()
             if not issue:
-                fallback = self.db.query(Issue).filter(Issue.source_issue_id == req.start_node_id).first()
-                if fallback and not fallback.source_record_id:
-                    issue = fallback
-                else:
+                if not self.project_id:
+                    fallback = self.db.query(Issue).filter(func.upper(Issue.source_issue_id) == raw_id.upper()).first()
+                    if fallback and (not fallback.source_record_id or not req.dataset_name or fallback.dataset_name == req.dataset_name):
+                        issue = fallback
+                if not issue:
                     return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            root_id = self._make_node_id("issue", issue.source_issue_id)
+            lbl = f"{issue.source_issue_id}: {issue.summary[:35]}" if issue.summary else issue.source_issue_id
             nodes_dict[root_id] = GraphNode(
                 id=root_id,
                 type="ISSUE",
-                label=issue.source_issue_id,
+                label=lbl,
                 properties={
+                    "source_issue_id": issue.source_issue_id,
                     "summary": issue.summary,
                     "issue_type": issue.issue_type,
                     "status": issue.status,
                     "created_at": issue.created_at.isoformat() if issue.created_at else None,
                 },
             )
-        elif req.start_node_type.upper() == "COMMIT":
+        elif raw_type == "COMMIT":
+            # 1. Exact or prefix match on Commit hash
             cmt_q = (
                 self.db.query(Commit)
                 .join(SourceRecord, Commit.source_record_id == SourceRecord.id)
-                .filter(Commit.commit_hash == req.start_node_id)
+                .filter(Commit.commit_hash.ilike(f"{raw_id}%"))
             )
-            if self.project_id and req.dataset_name:
-                cmt_q = cmt_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
-            elif self.project_id:
+            if self.project_id:
                 cmt_q = cmt_q.filter(SourceRecord.project_id == self.project_id)
             elif req.dataset_name:
                 cmt_q = cmt_q.filter(SourceRecord.dataset_name == req.dataset_name)
             cmt = cmt_q.first()
+
+            if not cmt and not self.project_id:
+                cmt = self.db.query(Commit).filter(Commit.commit_hash.ilike(f"{raw_id}%")).first()
+
+            # 2. Check if raw_id is an issue key linked to a commit
             if not cmt:
-                fallback = self.db.query(Commit).filter(Commit.commit_hash == req.start_node_id).first()
-                if fallback and not fallback.source_record_id:
-                    cmt = fallback
-                else:
-                    return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+                cil_q = (
+                    self.db.query(CommitIssueLink)
+                    .join(Commit, CommitIssueLink.commit_hash == Commit.commit_hash)
+                    .join(SourceRecord, Commit.source_record_id == SourceRecord.id)
+                    .filter(func.upper(CommitIssueLink.source_issue_id) == raw_id.upper())
+                )
+                if self.project_id:
+                    cil_q = cil_q.filter(SourceRecord.project_id == self.project_id)
+                elif req.dataset_name:
+                    cil_q = cil_q.filter(SourceRecord.dataset_name == req.dataset_name)
+                cil = cil_q.first()
+                if not cil and not self.project_id:
+                    cil = self.db.query(CommitIssueLink).filter(func.upper(CommitIssueLink.source_issue_id) == raw_id.upper()).first()
+                if cil:
+                    cmt = self.db.query(Commit).filter(Commit.commit_hash == cil.commit_hash).first()
+
+            # 3. Check if raw_id is an issue in the DB (even if without commits, e.g. KAFKA-10)
+            if not cmt:
+                issue_q = (
+                    self.db.query(Issue)
+                    .join(SourceRecord, Issue.source_record_id == SourceRecord.id)
+                    .filter(func.upper(Issue.source_issue_id) == raw_id.upper())
+                )
+                if self.project_id:
+                    issue_q = issue_q.filter(SourceRecord.project_id == self.project_id)
+                elif req.dataset_name:
+                    issue_q = issue_q.filter(SourceRecord.dataset_name == req.dataset_name)
+                issue_fallback = issue_q.first()
+                if not issue_fallback and not self.project_id:
+                    issue_fallback = self.db.query(Issue).filter(func.upper(Issue.source_issue_id) == raw_id.upper()).first()
+
+                if issue_fallback:
+                    root_id = self._make_node_id("issue", issue_fallback.source_issue_id)
+                    lbl = f"{issue_fallback.source_issue_id}: {issue_fallback.summary[:35]}" if issue_fallback.summary else issue_fallback.source_issue_id
+                    nodes_dict[root_id] = GraphNode(
+                        id=root_id,
+                        type="ISSUE",
+                        label=lbl,
+                        properties={
+                            "source_issue_id": issue_fallback.source_issue_id,
+                            "summary": issue_fallback.summary,
+                            "issue_type": issue_fallback.issue_type,
+                            "status": issue_fallback.status,
+                            "created_at": issue_fallback.created_at.isoformat() if issue_fallback.created_at else None,
+                            "note": f"Seed COMMIT resolved to issue {issue_fallback.source_issue_id}",
+                        },
+                    )
+
+            if cmt:
+                root_id = self._make_node_id("commit", cmt.commit_hash)
+                nodes_dict[root_id] = GraphNode(
+                    id=root_id,
+                    type="COMMIT",
+                    label=cmt.commit_hash[:8],
+                    properties={
+                        "commit_hash": cmt.commit_hash,
+                        "message": cmt.message[:120] if cmt.message else "",
+                        "author": cmt.author,
+                        "committed_at": cmt.committed_at.isoformat() if cmt.committed_at else None,
+                    },
+                )
+
+            if not nodes_dict:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+        elif raw_type in ("TEMPORAL_EVENT", "EVENT"):
+            try:
+                ev_id = int(raw_id)
+            except ValueError:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            ev_q = self.db.query(TemporalEvent).filter(TemporalEvent.id == ev_id)
+            if self.project_id:
+                ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+            elif req.dataset_name:
+                ev_q = ev_q.filter(TemporalEvent.dataset_name == req.dataset_name)
+            ev = ev_q.first()
+            if not ev:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            root_id = self._make_node_id("temporal_event", ev.id)
             nodes_dict[root_id] = GraphNode(
                 id=root_id,
-                type="COMMIT",
-                label=cmt.commit_hash[:8],
+                type="TEMPORAL_EVENT",
+                label=f"{ev.event_type}: {ev.subject[:35]}",
                 properties={
-                    "message": cmt.message[:120] if cmt.message else "",
-                    "author": cmt.author,
-                    "committed_at": cmt.committed_at.isoformat() if cmt.committed_at else None,
+                    "event_type": ev.event_type,
+                    "timestamp": ev.event_time.isoformat() if ev.event_time else None,
+                    "actor": ev.actor,
+                },
+            )
+
+        elif raw_type == "CONTRIBUTOR":
+            root_id = self._make_node_id("contributor", raw_id)
+            nodes_dict[root_id] = GraphNode(
+                id=root_id,
+                type="CONTRIBUTOR",
+                label=raw_id,
+                properties={"role": "contributor"},
+            )
+        elif raw_type == "EVIDENCE":
+            try:
+                evd_id = int(raw_id)
+            except ValueError:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            evd = self.db.query(EventEvidence).filter(EventEvidence.id == evd_id).first()
+            if not evd:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            root_id = self._make_node_id("evidence", evd.id)
+            nodes_dict[root_id] = GraphNode(
+                id=root_id,
+                type="EVIDENCE",
+                label=f"Excerpt: {evd.evidence_excerpt[:35]}...",
+                properties={
+                    "excerpt": evd.evidence_excerpt[:150],
+                    "source_record_id": evd.source_record_id,
+                    "hash": evd.evidence_hash[:16] if evd.evidence_hash else None,
+                    "role": evd.evidence_role,
+                    "event_id": evd.event_id,
+                },
+            )
+        elif raw_type == "ALIAS":
+            try:
+                al_id = int(raw_id)
+            except ValueError:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            al = self.db.query(FeatureAlias).filter(FeatureAlias.id == al_id).first()
+            if not al:
+                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+
+            root_id = self._make_node_id("alias", al.id)
+            nodes_dict[root_id] = GraphNode(
+                id=root_id,
+                type="ALIAS",
+                label=al.alias_name,
+                properties={
+                    "alias_type": al.alias_type,
+                    "confidence": al.confidence,
+                    "feature_id": al.feature_id,
                 },
             )
         else:
@@ -176,8 +319,20 @@ class KnowledgeGraphService:
                     self._expand_commit_node(
                         nid, node_id, nodes_dict, edges_dict, next_frontier, req
                     )
-                elif ntype == "TEMPORAL_EVENT":
+                elif ntype in ("TEMPORAL_EVENT", "EVENT"):
                     self._expand_event_node(
+                        int(nid), node_id, nodes_dict, edges_dict, next_frontier, req
+                    )
+                elif ntype == "CONTRIBUTOR":
+                    self._expand_contributor_node(
+                        nid, node_id, nodes_dict, edges_dict, next_frontier, req
+                    )
+                elif ntype == "EVIDENCE":
+                    self._expand_evidence_node(
+                        int(nid), node_id, nodes_dict, edges_dict, next_frontier, req
+                    )
+                elif ntype == "ALIAS":
+                    self._expand_alias_node(
                         int(nid), node_id, nodes_dict, edges_dict, next_frontier, req
                     )
 
@@ -374,7 +529,7 @@ class KnowledgeGraphService:
     ):
         issue = (
             self.db.query(Issue)
-            .filter(Issue.source_issue_id == issue_key)
+            .filter(func.upper(Issue.source_issue_id) == issue_key.upper())
             .first()
         )
         if not issue:
@@ -393,12 +548,24 @@ class KnowledgeGraphService:
             e_id = self._make_edge_id(c_node_id, issue_node_id, "CONTRIBUTOR_REPORTED_ISSUE")
             edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=issue_node_id, type="CONTRIBUTOR_REPORTED_ISSUE")
 
+        if issue.assignee and len(nodes) < req.max_nodes:
+            c_node_id = self._make_node_id("contributor", issue.assignee)
+            if c_node_id not in nodes:
+                nodes[c_node_id] = GraphNode(
+                    id=c_node_id,
+                    type="CONTRIBUTOR",
+                    label=issue.assignee,
+                    properties={"role": "assignee"},
+                )
+            e_id = self._make_edge_id(c_node_id, issue_node_id, "CONTRIBUTOR_ASSIGNED_ISSUE")
+            edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=issue_node_id, type="CONTRIBUTOR_ASSIGNED_ISSUE")
+
         # 2. Linked Commits
         commit_links_q = (
             self.db.query(CommitIssueLink)
             .join(Commit, CommitIssueLink.commit_hash == Commit.commit_hash)
             .join(SourceRecord, Commit.source_record_id == SourceRecord.id)
-            .filter(CommitIssueLink.source_issue_id == issue_key)
+            .filter(func.upper(CommitIssueLink.source_issue_id) == issue_key.upper())
         )
         if self.project_id and req.dataset_name:
             commit_links_q = commit_links_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
@@ -407,19 +574,19 @@ class KnowledgeGraphService:
         elif req.dataset_name:
             commit_links_q = commit_links_q.filter(SourceRecord.dataset_name == req.dataset_name)
         commit_links = commit_links_q.limit(10).all()
-        if not commit_links:
+        if not commit_links and not self.project_id:
             fallback_links = (
                 self.db.query(CommitIssueLink)
-                .filter(CommitIssueLink.source_issue_id == issue_key)
+                .filter(func.upper(CommitIssueLink.source_issue_id) == issue_key.upper())
                 .limit(10)
                 .all()
             )
-            # Only use fallback if commit has no source_record (e.g. synthetic test fixture)
             commit_links = [
                 cl for cl in fallback_links
                 if (not self.db.query(Commit).filter(Commit.commit_hash == cl.commit_hash).first() or
                     not self.db.query(Commit).filter(Commit.commit_hash == cl.commit_hash).first().source_record_id)
             ]
+
         for cl in commit_links:
             if len(nodes) >= req.max_nodes:
                 return
@@ -444,6 +611,68 @@ class KnowledgeGraphService:
             e_id = self._make_edge_id(c_node_id, issue_node_id, "COMMIT_REFERENCES_ISSUE")
             edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=issue_node_id, type="COMMIT_REFERENCES_ISSUE")
 
+        # 3. Linked Temporal Events
+        ev_q = self.db.query(TemporalEvent).filter(func.upper(TemporalEvent.issue_id) == issue_key.upper())
+        if self.project_id and req.dataset_name:
+            ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == req.dataset_name))
+        elif self.project_id:
+            ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+        elif req.dataset_name:
+            ev_q = ev_q.filter(TemporalEvent.dataset_name == req.dataset_name)
+        events = ev_q.limit(15).all()
+
+        for ev in events:
+            if len(nodes) >= req.max_nodes:
+                return
+            ev_node_id = self._make_node_id("temporal_event", ev.id)
+            if ev_node_id not in nodes:
+                nodes[ev_node_id] = GraphNode(
+                    id=ev_node_id,
+                    type="TEMPORAL_EVENT",
+                    label=f"{ev.event_type}: {ev.subject[:35]}",
+                    properties={
+                        "event_type": ev.event_type,
+                        "timestamp": ev.event_time.isoformat() if ev.event_time else None,
+                        "actor": ev.actor,
+                    },
+                )
+                next_frontier.add(ev_node_id)
+            rel_type = "ISSUE_GENERATED_EVENT"
+            e_id = self._make_edge_id(issue_node_id, ev_node_id, rel_type)
+            edges[e_id] = GraphEdge(id=e_id, source=issue_node_id, target=ev_node_id, type=rel_type)
+
+        # 4. Linked Features
+        feat_links = (
+            self.db.query(FeatureRecordLink)
+            .filter(
+                FeatureRecordLink.record_type == "issue",
+                func.upper(FeatureRecordLink.record_id) == issue_key.upper()
+            )
+            .limit(5)
+            .all()
+        )
+        for fl in feat_links:
+            if len(nodes) >= req.max_nodes:
+                return
+            f_node_id = self._make_node_id("feature", fl.feature_id)
+            if f_node_id not in nodes:
+                feat = self.db.query(Feature).filter(Feature.id == fl.feature_id).first()
+                if feat:
+                    nodes[f_node_id] = GraphNode(
+                        id=f_node_id,
+                        type="FEATURE",
+                        label=feat.canonical_name,
+                        properties={
+                            "category": feat.feature_category,
+                            "status": feat.resolution_status,
+                            "confidence": fl.confidence,
+                        },
+                    )
+                    next_frontier.add(f_node_id)
+            rel_type = f"FEATURE_{fl.relationship_type}"
+            e_id = self._make_edge_id(f_node_id, issue_node_id, rel_type)
+            edges[e_id] = GraphEdge(id=e_id, source=f_node_id, target=issue_node_id, type=rel_type, properties={"confidence": fl.confidence})
+
     def _expand_commit_node(
         self,
         commit_hash: str,
@@ -455,13 +684,13 @@ class KnowledgeGraphService:
     ):
         cmt = (
             self.db.query(Commit)
-            .filter(Commit.commit_hash == commit_hash)
+            .filter(Commit.commit_hash.ilike(f"{commit_hash}%"))
             .first()
         )
         if not cmt:
             return
 
-        # Contributor (Author)
+        # 1. Contributor (Author)
         if cmt.author and len(nodes) < req.max_nodes:
             c_node_id = self._make_node_id("contributor", cmt.author)
             if c_node_id not in nodes:
@@ -473,6 +702,101 @@ class KnowledgeGraphService:
                 )
             e_id = self._make_edge_id(c_node_id, commit_node_id, "CONTRIBUTOR_AUTHORED_COMMIT")
             edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=commit_node_id, type="CONTRIBUTOR_AUTHORED_COMMIT")
+
+        # 2. Linked Issues via CommitIssueLink
+        issue_links = (
+            self.db.query(CommitIssueLink)
+            .filter(CommitIssueLink.commit_hash == cmt.commit_hash)
+            .limit(10)
+            .all()
+        )
+        for il in issue_links:
+            if len(nodes) >= req.max_nodes:
+                return
+            i_node_id = self._make_node_id("issue", il.source_issue_id)
+            if i_node_id not in nodes:
+                issue = (
+                    self.db.query(Issue)
+                    .filter(func.upper(Issue.source_issue_id) == il.source_issue_id.upper())
+                    .first()
+                )
+                lbl = f"{il.source_issue_id}: {issue.summary[:35]}" if issue and issue.summary else il.source_issue_id
+                nodes[i_node_id] = GraphNode(
+                    id=i_node_id,
+                    type="ISSUE",
+                    label=lbl,
+                    properties={
+                        "source_issue_id": il.source_issue_id,
+                        "issue_type": issue.issue_type if issue else "Unknown",
+                        "status": issue.status if issue else "Unknown",
+                        "created_at": issue.created_at.isoformat() if issue and issue.created_at else None,
+                    },
+                )
+                next_frontier.add(i_node_id)
+            e_id = self._make_edge_id(commit_node_id, i_node_id, "COMMIT_REFERENCES_ISSUE")
+            edges[e_id] = GraphEdge(id=e_id, source=commit_node_id, target=i_node_id, type="COMMIT_REFERENCES_ISSUE")
+
+        # 3. Linked Temporal Events
+        ev_q = self.db.query(TemporalEvent).filter(TemporalEvent.commit_hash == cmt.commit_hash)
+        if self.project_id and req.dataset_name:
+            ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == req.dataset_name))
+        elif self.project_id:
+            ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+        elif req.dataset_name:
+            ev_q = ev_q.filter(TemporalEvent.dataset_name == req.dataset_name)
+        evs = ev_q.limit(10).all()
+
+        for ev in evs:
+            if len(nodes) >= req.max_nodes:
+                return
+            ev_node_id = self._make_node_id("temporal_event", ev.id)
+            if ev_node_id not in nodes:
+                nodes[ev_node_id] = GraphNode(
+                    id=ev_node_id,
+                    type="TEMPORAL_EVENT",
+                    label=f"{ev.event_type}: {ev.subject[:35]}",
+                    properties={
+                        "event_type": ev.event_type,
+                        "timestamp": ev.event_time.isoformat() if ev.event_time else None,
+                        "actor": ev.actor,
+                    },
+                )
+                next_frontier.add(ev_node_id)
+            rel_type = "COMMIT_GENERATED_EVENT"
+            e_id = self._make_edge_id(commit_node_id, ev_node_id, rel_type)
+            edges[e_id] = GraphEdge(id=e_id, source=commit_node_id, target=ev_node_id, type=rel_type)
+
+        # 4. Linked Features
+        feat_links = (
+            self.db.query(FeatureRecordLink)
+            .filter(
+                FeatureRecordLink.record_type == "commit",
+                FeatureRecordLink.record_id == cmt.commit_hash
+            )
+            .limit(5)
+            .all()
+        )
+        for fl in feat_links:
+            if len(nodes) >= req.max_nodes:
+                return
+            f_node_id = self._make_node_id("feature", fl.feature_id)
+            if f_node_id not in nodes:
+                feat = self.db.query(Feature).filter(Feature.id == fl.feature_id).first()
+                if feat:
+                    nodes[f_node_id] = GraphNode(
+                        id=f_node_id,
+                        type="FEATURE",
+                        label=feat.canonical_name,
+                        properties={
+                            "category": feat.feature_category,
+                            "status": feat.resolution_status,
+                            "confidence": fl.confidence,
+                        },
+                    )
+                    next_frontier.add(f_node_id)
+            rel_type = f"COMMIT_{fl.relationship_type}"
+            e_id = self._make_edge_id(commit_node_id, f_node_id, rel_type)
+            edges[e_id] = GraphEdge(id=e_id, source=commit_node_id, target=f_node_id, type=rel_type, properties={"confidence": fl.confidence})
 
     def _expand_event_node(
         self,
@@ -494,11 +818,11 @@ class KnowledgeGraphService:
         if not ev:
             return
 
-        # Evidence
+        # 1. Evidence
         evidences = (
             self.db.query(EventEvidence)
             .filter(EventEvidence.event_id == event_id)
-            .limit(2)
+            .limit(3)
             .all()
         )
         for evd in evidences:
@@ -526,7 +850,7 @@ class KnowledgeGraphService:
                 properties={"role": evd.evidence_role},
             )
 
-        # Contributor (Actor)
+        # 2. Contributor (Actor)
         if ev.actor and len(nodes) < req.max_nodes:
             c_node_id = self._make_node_id("contributor", ev.actor)
             if c_node_id not in nodes:
@@ -538,6 +862,182 @@ class KnowledgeGraphService:
                 )
             e_id = self._make_edge_id(c_node_id, event_node_id, "CONTRIBUTOR_TRIGGERED_EVENT")
             edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=event_node_id, type="CONTRIBUTOR_TRIGGERED_EVENT")
+
+        # 3. Associated Issue (if any)
+        if ev.issue_id and len(nodes) < req.max_nodes:
+            i_node_id = self._make_node_id("issue", ev.issue_id)
+            if i_node_id not in nodes:
+                issue = self.db.query(Issue).filter(func.upper(Issue.source_issue_id) == ev.issue_id.upper()).first()
+                lbl = f"{ev.issue_id}: {issue.summary[:35]}" if issue and issue.summary else ev.issue_id
+                nodes[i_node_id] = GraphNode(
+                    id=i_node_id,
+                    type="ISSUE",
+                    label=lbl,
+                    properties={
+                        "source_issue_id": ev.issue_id,
+                        "issue_type": issue.issue_type if issue else "Unknown",
+                        "created_at": issue.created_at.isoformat() if issue and issue.created_at else None,
+                    },
+                )
+                next_frontier.add(i_node_id)
+            e_id = self._make_edge_id(event_node_id, i_node_id, "EVENT_ASSOCIATED_WITH_ISSUE")
+            edges[e_id] = GraphEdge(id=e_id, source=event_node_id, target=i_node_id, type="EVENT_ASSOCIATED_WITH_ISSUE")
+
+        # 4. Associated Commit (if any)
+        if ev.commit_hash and len(nodes) < req.max_nodes:
+            c_node_id = self._make_node_id("commit", ev.commit_hash)
+            if c_node_id not in nodes:
+                cmt = self.db.query(Commit).filter(Commit.commit_hash == ev.commit_hash).first()
+                nodes[c_node_id] = GraphNode(
+                    id=c_node_id,
+                    type="COMMIT",
+                    label=cmt.commit_hash[:8] if cmt else ev.commit_hash[:8],
+                    properties={
+                        "message": cmt.message[:80] if cmt and cmt.message else "",
+                        "author": cmt.author if cmt else "Unknown",
+                        "committed_at": cmt.committed_at.isoformat() if cmt and cmt.committed_at else None,
+                    },
+                )
+                next_frontier.add(c_node_id)
+            e_id = self._make_edge_id(event_node_id, c_node_id, "EVENT_ASSOCIATED_WITH_COMMIT")
+            edges[e_id] = GraphEdge(id=e_id, source=event_node_id, target=c_node_id, type="EVENT_ASSOCIATED_WITH_COMMIT")
+
+    def _expand_contributor_node(
+        self,
+        actor_name: str,
+        actor_node_id: str,
+        nodes: Dict[str, GraphNode],
+        edges: Dict[str, GraphEdge],
+        next_frontier: Set[str],
+        req: GraphQueryRequest,
+    ):
+        # 1. Recent Commits authored
+        cmts = (
+            self.db.query(Commit)
+            .filter(Commit.author.ilike(actor_name))
+            .limit(5)
+            .all()
+        )
+        for cmt in cmts:
+            if len(nodes) >= req.max_nodes:
+                return
+            c_node_id = self._make_node_id("commit", cmt.commit_hash)
+            if c_node_id not in nodes:
+                nodes[c_node_id] = GraphNode(
+                    id=c_node_id,
+                    type="COMMIT",
+                    label=cmt.commit_hash[:8],
+                    properties={
+                        "message": cmt.message[:80] if cmt.message else "",
+                        "author": cmt.author,
+                        "committed_at": cmt.committed_at.isoformat() if cmt.committed_at else None,
+                    },
+                )
+                next_frontier.add(c_node_id)
+            e_id = self._make_edge_id(actor_node_id, c_node_id, "CONTRIBUTOR_AUTHORED_COMMIT")
+            edges[e_id] = GraphEdge(id=e_id, source=actor_node_id, target=c_node_id, type="CONTRIBUTOR_AUTHORED_COMMIT")
+
+        # 2. Issues reported
+        issues = (
+            self.db.query(Issue)
+            .filter((Issue.reporter.ilike(actor_name)) | (Issue.assignee.ilike(actor_name)))
+            .limit(5)
+            .all()
+        )
+        for iss in issues:
+            if len(nodes) >= req.max_nodes:
+                return
+            i_node_id = self._make_node_id("issue", iss.source_issue_id)
+            if i_node_id not in nodes:
+                lbl = f"{iss.source_issue_id}: {iss.summary[:35]}" if iss.summary else iss.source_issue_id
+                nodes[i_node_id] = GraphNode(
+                    id=i_node_id,
+                    type="ISSUE",
+                    label=lbl,
+                    properties={
+                        "source_issue_id": iss.source_issue_id,
+                        "issue_type": iss.issue_type,
+                    },
+                )
+                next_frontier.add(i_node_id)
+            e_id = self._make_edge_id(actor_node_id, i_node_id, "CONTRIBUTOR_REPORTED_ISSUE")
+            edges[e_id] = GraphEdge(id=e_id, source=actor_node_id, target=i_node_id, type="CONTRIBUTOR_REPORTED_ISSUE")
+
+    def _expand_evidence_node(
+        self,
+        evidence_id: int,
+        evidence_node_id: str,
+        nodes: Dict[str, GraphNode],
+        edges: Dict[str, GraphEdge],
+        next_frontier: Set[str],
+        req: GraphQueryRequest,
+    ):
+        evd = self.db.query(EventEvidence).filter(EventEvidence.id == evidence_id).first()
+        if not evd:
+            return
+        if len(nodes) >= req.max_nodes:
+            return
+        ev = self.db.query(TemporalEvent).filter(TemporalEvent.id == evd.event_id).first()
+        if ev:
+            ev_node_id = self._make_node_id("temporal_event", ev.id)
+            if ev_node_id not in nodes:
+                nodes[ev_node_id] = GraphNode(
+                    id=ev_node_id,
+                    type="TEMPORAL_EVENT",
+                    label=f"{ev.event_type}: {ev.subject[:35]}",
+                    properties={
+                        "event_type": ev.event_type,
+                        "timestamp": ev.event_time.isoformat() if ev.event_time else None,
+                        "actor": ev.actor,
+                    },
+                )
+                next_frontier.add(ev_node_id)
+            e_id = self._make_edge_id(ev_node_id, evidence_node_id, "EVENT_SUPPORTED_BY_EVIDENCE")
+            edges[e_id] = GraphEdge(
+                id=e_id,
+                source=ev_node_id,
+                target=evidence_node_id,
+                type="EVENT_SUPPORTED_BY_EVIDENCE",
+                properties={"role": evd.evidence_role},
+            )
+
+    def _expand_alias_node(
+        self,
+        alias_id: int,
+        alias_node_id: str,
+        nodes: Dict[str, GraphNode],
+        edges: Dict[str, GraphEdge],
+        next_frontier: Set[str],
+        req: GraphQueryRequest,
+    ):
+        al = self.db.query(FeatureAlias).filter(FeatureAlias.id == alias_id).first()
+        if not al:
+            return
+        if len(nodes) >= req.max_nodes:
+            return
+        feat = self.db.query(Feature).filter(Feature.id == al.feature_id).first()
+        if feat:
+            f_node_id = self._make_node_id("feature", feat.id)
+            if f_node_id not in nodes:
+                nodes[f_node_id] = GraphNode(
+                    id=f_node_id,
+                    type="FEATURE",
+                    label=feat.canonical_name,
+                    properties={
+                        "category": feat.feature_category,
+                        "status": feat.resolution_status,
+                        "confidence": feat.identity_confidence,
+                    },
+                )
+                next_frontier.add(f_node_id)
+            e_id = self._make_edge_id(f_node_id, alias_node_id, "FEATURE_HAS_ALIAS")
+            edges[e_id] = GraphEdge(
+                id=e_id,
+                source=f_node_id,
+                target=alias_node_id,
+                type="FEATURE_HAS_ALIAS",
+                properties={"confidence": al.confidence},
+            )
 
     def get_graph_statistics(self) -> Dict[str, Any]:
         """Returns overall graph metrics across the dataset or project."""

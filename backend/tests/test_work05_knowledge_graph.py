@@ -224,3 +224,68 @@ def test_graph_api_endpoints():
         assert "nodes" in g_data
         assert "edges" in g_data
         assert g_data["node_count"] >= 1
+
+
+def test_issue_seed_case_insensitivity(graph_db):
+    svc = KnowledgeGraphService(graph_db, dataset_name="TestGraph")
+    req = GraphQueryRequest(
+        start_node_type="ISSUE",
+        start_node_id="kafka-555",  # Lowercase
+        depth=2,
+        dataset_name="TestGraph",
+    )
+    graph = svc.query_graph(req)
+    assert graph.root_node_id == "issue:KAFKA-555"
+    assert graph.node_count >= 2
+    types = {n.type for n in graph.nodes}
+    assert "ISSUE" in types
+
+
+def test_commit_seed_prefix_and_resolution(graph_db):
+    svc = KnowledgeGraphService(graph_db, dataset_name="TestGraph")
+
+    # 1. Test prefix commit hash
+    req_prefix = GraphQueryRequest(
+        start_node_type="COMMIT",
+        start_node_id="c0ffee12",
+        depth=2,
+        dataset_name="TestGraph",
+    )
+    graph_prefix = svc.query_graph(req_prefix)
+    assert graph_prefix.root_node_id == "commit:c0ffee1234567890abcdef"
+    assert graph_prefix.node_count >= 2
+
+    # 2. Test issue key entered into commit seed
+    req_issue_in_commit = GraphQueryRequest(
+        start_node_type="COMMIT",
+        start_node_id="kafka-555",
+        depth=2,
+        dataset_name="TestGraph",
+    )
+    graph_resolved = svc.query_graph(req_issue_in_commit)
+    assert graph_resolved.root_node_id == "commit:c0ffee1234567890abcdef"
+    assert graph_resolved.node_count >= 2
+
+
+def test_live_api_node_subgraph_seeds():
+    client = TestClient(app)
+
+    # 1. ISSUE:kafka-10 (lowercase)
+    res_issue = client.get("/api/graph/nodes/ISSUE/kafka-10?project_id=1&dataset_name=KafkaSQLite")
+    assert res_issue.status_code == 200, res_issue.text
+    data_issue = res_issue.json()
+    assert data_issue["node_count"] >= 1
+    assert data_issue["root_node_id"] == "issue:KAFKA-10"
+
+    # 2. COMMIT:kafka-10 (lowercase issue key into commit seed)
+    res_commit = client.get("/api/graph/nodes/COMMIT/kafka-10?project_id=1&dataset_name=KafkaSQLite")
+    assert res_commit.status_code == 200, res_commit.text
+    data_commit = res_commit.json()
+    assert data_commit["node_count"] >= 1
+
+    # 3. COMMIT prefix hash
+    res_cmt_prefix = client.get("/api/graph/nodes/COMMIT/83b8cf96?project_id=1&dataset_name=KafkaSQLite")
+    assert res_cmt_prefix.status_code == 200, res_cmt_prefix.text
+    data_prefix = res_cmt_prefix.json()
+    assert data_prefix["node_count"] >= 1
+
