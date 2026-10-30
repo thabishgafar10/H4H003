@@ -1,0 +1,32 @@
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker, Session
+from app.core.config import settings
+from typing import Generator
+
+engine = create_engine(
+    settings.APP_DATABASE_URL,
+    connect_args={"check_same_thread": False} # Needed for SQLite
+)
+
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+
+def get_db() -> Generator[Session, None, None]:
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
+
+def init_db(target_engine=None):
+    from app.db.base import Base
+    # Import all models to ensure they are registered with Base.metadata
+    from app.models.source_record import SourceRecord
+    from app.models.issue import Issue
+    from app.models.issue_comment import IssueComment
+    from app.models.commit import Commit
+    from app.models.code_change import CodeChange
+    from app.models.issue_relationships import IssueComponent, IssueFixVersion, IssueLink, CommitIssueLink
+    from app.models.ingestion_batch import IngestionBatch
+
+    eng = target_engine if target_engine is not None else engine
+    Base.metadata.create_all(bind=eng)
