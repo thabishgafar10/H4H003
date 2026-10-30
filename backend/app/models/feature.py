@@ -13,6 +13,7 @@ class Feature(Base):
     __tablename__ = "features"
 
     id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
     dataset_name = Column(String, nullable=False, default="KafkaSQLite", index=True)
     canonical_name = Column(String, nullable=False, index=True)
     normalized_name = Column(String, nullable=False, index=True)
@@ -79,4 +80,3 @@ class FeatureRecordLink(Base):
     __table_args__ = (
         UniqueConstraint("feature_id", "record_type", "record_id", "relationship_type", name="_feature_record_link_uc"),
     )
-

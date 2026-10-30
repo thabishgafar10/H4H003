@@ -9,3 +9,5 @@ pandas
 networkx
 pytest
 httpx
+pypdf
+python-docx

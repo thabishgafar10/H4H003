@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, JSON, DateTime, UniqueConstraint
+from sqlalchemy import Column, Integer, String, JSON, DateTime, ForeignKey, UniqueConstraint
 from sqlalchemy.sql import func
 from app.db.base import Base
 
@@ -6,6 +6,7 @@ class SourceRecord(Base):
     __tablename__ = "source_records"
 
     id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
     dataset_name = Column(String, nullable=False)
     source_table = Column(String, nullable=False)
     source_record_id = Column(String, nullable=False)

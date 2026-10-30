@@ -8,6 +8,7 @@ class TemporalEvent(Base):
     __tablename__ = "temporal_events"
 
     id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
     dataset_name = Column(String, nullable=False, default="KafkaSQLite", index=True)
     event_key = Column(String, nullable=False, index=True)
     event_type = Column(String, nullable=False, index=True)

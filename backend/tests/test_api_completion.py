@@ -35,16 +35,13 @@ def override_get_db():
         db.close()
 
 
-app.dependency_overrides[get_db] = override_get_db
-
-
 @pytest.fixture(autouse=True)
 def setup_db():
+    app.dependency_overrides[get_db] = override_get_db
     init_db(target_engine=test_engine)
     yield
     Base.metadata.drop_all(bind=test_engine)
-    # Re-create so next test starts clean
-    init_db(target_engine=test_engine)
+    app.dependency_overrides.pop(get_db, None)
 
 
 client = TestClient(app)

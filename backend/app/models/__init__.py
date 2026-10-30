@@ -1,3 +1,7 @@
+from app.models.project import Project
+from app.models.source_connection import SourceConnection
+from app.models.document import Document
+from app.models.ingestion_run import IngestionRun
 from app.models.source_record import SourceRecord
 from app.models.issue import Issue
 from app.models.commit import Commit
@@ -13,6 +17,10 @@ from app.models.event_evidence import EventEvidence
 from app.models.feature import Feature, FeatureAlias, FeatureRecordLink
 
 __all__ = [
+    "Project",
+    "SourceConnection",
+    "Document",
+    "IngestionRun",
     "SourceRecord",
     "Issue",
     "Commit",

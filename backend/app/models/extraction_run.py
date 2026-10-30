@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Text
+from sqlalchemy import Column, Integer, String, DateTime, Text, ForeignKey
 from sqlalchemy.sql import func
 from sqlalchemy.orm import relationship
 from app.db.base import Base
@@ -8,6 +8,7 @@ class ExtractionRun(Base):
     __tablename__ = "extraction_runs"
 
     id = Column(Integer, primary_key=True)
+    project_id = Column(Integer, ForeignKey("projects.id"), nullable=True, index=True)
     dataset_name = Column(String, nullable=False, default="KafkaSQLite", index=True)
     status = Column(String, nullable=False, default="RUNNING", index=True)
     extraction_mode = Column(String, nullable=False, default="DETERMINISTIC")  # DETERMINISTIC or HYBRID

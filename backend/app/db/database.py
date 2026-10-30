@@ -20,6 +20,10 @@ def get_db() -> Generator[Session, None, None]:
 def init_db(target_engine=None):
     from app.db.base import Base
     # Import all models to ensure they are registered with Base.metadata
+    from app.models.project import Project
+    from app.models.source_connection import SourceConnection
+    from app.models.document import Document
+    from app.models.ingestion_run import IngestionRun
     from app.models.source_record import SourceRecord
     from app.models.issue import Issue
     from app.models.issue_comment import IssueComment

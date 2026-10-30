@@ -66,7 +66,7 @@
           <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
             Temporal Product Knowledge System
           </h1>
-          <p class="text-xs text-slate-400">Reconstructing Software Evolution from Engineering Records</p>
+          <p class="text-xs text-slate-400">Multi-Source Product Intelligence & Evolution Engine</p>
         </div>
       </div>
 
@@ -74,6 +74,9 @@
       <nav class="flex space-x-5 text-sm overflow-x-auto">
         <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-5 text-slate-300 hover:text-white transition whitespace-nowrap">
           <i class="fa-solid fa-chart-pie mr-1.5"></i> Overview
+        </button>
+        <button onclick="switchTab('sources')" id="tab-sources" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+          <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Connect Sources
         </button>
         <button onclick="switchTab('features')" id="tab-features" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
           <i class="fa-solid fa-shapes mr-1.5"></i> Features
@@ -95,13 +98,18 @@
         </button>
       </nav>
 
-      <!-- Dataset Badge & System Status -->
-      <div class="flex items-center space-x-3">
-        <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-          <span class="w-1.5 h-1.5 mr-1.5 rounded-full bg-emerald-400 animate-pulse"></span>
-          Kafka Dataset
-        </span>
-        <a href="/docs" target="_blank" class="text-xs text-slate-400 hover:text-cyan-400 border border-slate-700 px-3 py-1.5 rounded-md transition flex items-center">
+      <!-- Project Selector & System Status -->
+      <div class="flex items-center space-x-2">
+        <div class="flex items-center space-x-1.5 bg-slate-800/80 border border-slate-700/80 rounded-lg px-2.5 py-1">
+          <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+          <select id="global-project-select" onchange="onProjectChange(this.value)" class="bg-transparent text-xs text-cyan-300 font-semibold focus:outline-none cursor-pointer">
+            <option value="1">Apache Kafka</option>
+          </select>
+        </div>
+        <button onclick="openNewProjectModal()" title="Onboard new project" class="text-xs bg-indigo-600/80 hover:bg-indigo-600 text-white font-medium px-2.5 py-1.5 rounded-lg border border-indigo-500/30 flex items-center transition shadow">
+          <i class="fa-solid fa-plus mr-1"></i> New
+        </button>
+        <a href="/docs" target="_blank" class="text-xs text-slate-400 hover:text-cyan-400 border border-slate-700 px-3 py-1.5 rounded-md transition flex items-center hidden lg:flex">
           <i class="fa-solid fa-book-open mr-1.5"></i> API Docs
         </a>
       </div>
@@ -178,6 +186,183 @@
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="taxonomy-distribution-grid">
           <!-- Dynamically populated -->
         </div>
+      </div>
+    </section>
+
+    <!-- TAB: CONNECT SOURCES (WORK 07) -->
+    <section id="view-sources" class="hidden space-y-6">
+      <div class="flex justify-between items-center">
+        <div>
+          <h2 class="text-lg font-bold text-white flex items-center">
+            <i class="fa-solid fa-cloud-arrow-up text-cyan-400 mr-2"></i> Multi-Source Project Onboarding
+          </h2>
+          <p class="text-xs text-slate-400">Connect Jira Cloud instances, public GitHub repositories, and architectural documents into the active project.</p>
+        </div>
+        <div class="flex items-center space-x-2">
+          <button onclick="loadIngestionRuns()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 text-xs font-medium transition">
+            <i class="fa-solid fa-rotate mr-1"></i> Refresh Runs
+          </button>
+        </div>
+      </div>
+
+      <!-- Sources Connect Grid (3 Cards) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <!-- 1. Jira Cloud Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-blue-900/60 text-blue-400 flex items-center justify-center font-bold">
+                  <i class="fa-brands fa-jira text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Jira Cloud</h3>
+                  <p class="text-[11px] text-slate-400">REST API v3, ADF & Changelogs</p>
+                </div>
+              </div>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800">Read-Only</span>
+            </div>
+
+            <div class="space-y-2 pt-1 text-xs">
+              <div>
+                <label class="text-slate-400 block mb-1">Base URL</label>
+                <input type="text" id="jira-base-url" placeholder="https://example.atlassian.net" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Account Email</label>
+                <input type="email" id="jira-email" placeholder="dev@company.com" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">API Token</label>
+                <input type="password" id="jira-api-token" placeholder="ATATT3xFfGF0..." class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+              </div>
+              <div id="jira-status-msg" class="text-[11px] min-h-[1.25rem]"></div>
+            </div>
+          </div>
+
+          <div class="flex gap-2 pt-2 border-t border-slate-800">
+            <button onclick="testJiraConnection()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded text-xs font-medium transition">
+              <i class="fa-solid fa-stethoscope mr-1"></i> Test
+            </button>
+            <button onclick="saveAndSyncJira()" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold transition">
+              <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Connect & Sync
+            </button>
+          </div>
+        </div>
+
+        <!-- 2. GitHub Public Repo Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-emerald-900/60 text-emerald-400 flex items-center justify-center font-bold">
+                  <i class="fa-brands fa-github text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">GitHub Public</h3>
+                  <p class="text-[11px] text-slate-400">Commits, File Diffs & PRs</p>
+                </div>
+              </div>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Public/Token</span>
+            </div>
+
+            <div class="space-y-2 pt-1 text-xs">
+              <div>
+                <label class="text-slate-400 block mb-1">Repository URL or Slug</label>
+                <input type="text" id="github-repo-url" placeholder="https://github.com/apache/kafka" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Personal Access Token (Optional)</label>
+                <input type="password" id="github-token" placeholder="ghp_xxxx (recommended for rate limits)" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+              </div>
+              <p class="text-[11px] text-slate-500">Unauthenticated limit is 60 req/hr. Tokens raise it to 5,000 req/hr.</p>
+              <div id="github-status-msg" class="text-[11px] min-h-[1.25rem]"></div>
+            </div>
+          </div>
+
+          <div class="flex gap-2 pt-2 border-t border-slate-800">
+            <button onclick="testGithubConnection()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded text-xs font-medium transition">
+              <i class="fa-solid fa-stethoscope mr-1"></i> Validate
+            </button>
+            <button onclick="saveAndSyncGithub()" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold transition">
+              <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Connect & Sync
+            </button>
+          </div>
+        </div>
+
+        <!-- 3. Document Ingestion Card -->
+        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
+          <div class="space-y-3">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center space-x-2.5">
+                <div class="w-8 h-8 rounded-lg bg-purple-900/60 text-purple-400 flex items-center justify-center font-bold">
+                  <i class="fa-solid fa-file-lines text-base"></i>
+                </div>
+                <div>
+                  <h3 class="text-sm font-bold text-white">Documents</h3>
+                  <p class="text-[11px] text-slate-400">PDF, DOCX, Markdown, TXT & URLs</p>
+                </div>
+              </div>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800">SSRF Guard</span>
+            </div>
+
+            <div class="space-y-2 pt-1 text-xs">
+              <div>
+                <label class="text-slate-400 block mb-1">Direct File Upload</label>
+                <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.md" class="w-full px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-300 text-xs">
+              </div>
+              <div class="relative flex py-1 items-center">
+                <div class="flex-grow border-t border-slate-800"></div>
+                <span class="flex-shrink mx-2 text-[10px] text-slate-500 uppercase">OR Public URL</span>
+                <div class="flex-grow border-t border-slate-800"></div>
+              </div>
+              <div>
+                <label class="text-slate-400 block mb-1">Document Public URL</label>
+                <input type="url" id="doc-url-input" placeholder="https://raw.githubusercontent.com/.../KIP-500.md" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+              </div>
+              <div id="doc-status-msg" class="text-[11px] min-h-[1.25rem]"></div>
+            </div>
+          </div>
+
+          <div class="flex gap-2 pt-2 border-t border-slate-800">
+            <button onclick="uploadDocumentFile()" class="flex-1 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold transition">
+              <i class="fa-solid fa-upload mr-1"></i> Upload File
+            </button>
+            <button onclick="ingestDocumentFromUrl()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-purple-300 rounded text-xs font-medium transition">
+              <i class="fa-solid fa-link mr-1"></i> Ingest URL
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ingestion Runs Monitor Table -->
+      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+          <div>
+            <h3 class="font-bold text-sm text-white flex items-center">
+              <i class="fa-solid fa-server text-cyan-400 mr-2"></i> Ingestion Execution & Incremental Sync Monitor
+            </h3>
+            <p class="text-[11px] text-slate-400">Tracking execution status, throughput, and sync checkpoints for the active project.</p>
+          </div>
+          <span class="text-xs text-slate-400" id="ingestion-active-project-tag">Project: Apache Kafka</span>
+        </div>
+        <table class="w-full text-left text-xs text-slate-300">
+          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+            <tr>
+              <th class="px-4 py-3">Run ID</th>
+              <th class="px-4 py-3">Source System</th>
+              <th class="px-4 py-3">Status</th>
+              <th class="px-4 py-3">Discovered</th>
+              <th class="px-4 py-3">Created</th>
+              <th class="px-4 py-3">Updated / Skipped</th>
+              <th class="px-4 py-3">Started At</th>
+              <th class="px-4 py-3">Checkpoint</th>
+            </tr>
+          </thead>
+          <tbody id="ingestion-runs-tbody" class="divide-y divide-slate-800/60 font-mono">
+            <tr><td colspan="8" class="px-4 py-6 text-center text-slate-500">Loading project ingestion runs...</td></tr>
+          </tbody>
+        </table>
       </div>
     </section>
 
@@ -479,14 +664,54 @@
 
   </main>
 
+  <!-- Modal: Create New Project -->
+  <div id="modal-new-project" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+        <h3 class="text-base font-bold text-white flex items-center">
+          <i class="fa-solid fa-folder-plus text-cyan-400 mr-2"></i> Onboard New Product Project
+        </h3>
+        <button onclick="closeNewProjectModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+      </div>
+
+      <div class="space-y-3 text-xs">
+        <div>
+          <label class="text-slate-300 font-medium block mb-1">Project Name *</label>
+          <input type="text" id="new-proj-name" placeholder="e.g. Apache Flink, Elasticsearch" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="text-slate-300 font-medium block mb-1">Slug (Identifier) *</label>
+          <input type="text" id="new-proj-slug" placeholder="e.g. flink, es" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="text-slate-300 font-medium block mb-1">Domain / Category</label>
+          <input type="text" id="new-proj-domain" placeholder="e.g. Stream Processing, Search Engine" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500">
+        </div>
+        <div>
+          <label class="text-slate-300 font-medium block mb-1">Description</label>
+          <textarea id="new-proj-desc" rows="2" placeholder="Brief summary of the software product..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500"></textarea>
+        </div>
+        <div id="new-proj-err" class="text-rose-400 text-[11px] min-h-[1rem]"></div>
+      </div>
+
+      <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
+        <button onclick="closeNewProjectModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-medium transition">Cancel</button>
+        <button onclick="submitNewProject()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-semibold shadow transition">Create Project</button>
+      </div>
+    </div>
+  </div>
+
   <script>
+    let currentProjectId = 1;
+    let currentProjectSlug = 'kafka';
+    let projectsList = [];
     let currentEventsPage = 0;
     const PAGE_SIZE = 15;
     let allFeaturesCache = [];
 
     // Tab Switching
     function switchTab(tabName) {
-      const tabs = ['overview', 'features', 'graph', 'qa', 'explorer', 'timeline', 'extraction'];
+      const tabs = ['overview', 'sources', 'features', 'graph', 'qa', 'explorer', 'timeline', 'extraction'];
       tabs.forEach(t => {
         const elView = document.getElementById(`view-${t}`);
         const elTab = document.getElementById(`tab-${t}`);
@@ -506,6 +731,7 @@
       }
 
       if (tabName === 'overview') loadOverviewStats();
+      if (tabName === 'sources') loadIngestionRuns();
       if (tabName === 'features') loadFeaturesList();
       if (tabName === 'graph') loadGraphControls();
       if (tabName === 'qa') loadQAPage();
@@ -1050,8 +1276,328 @@
       }
     }
 
+    // Project Management (Work 07)
+    async function loadProjects() {
+      try {
+        const res = await fetch('/api/projects');
+        if (res.ok) {
+          projectsList = await res.json();
+          const select = document.getElementById('global-project-select');
+          select.innerHTML = '';
+          projectsList.forEach(p => {
+            const opt = document.createElement('option');
+            opt.value = p.id;
+            opt.textContent = `${p.name} (${p.slug})`;
+            if (p.id === currentProjectId) opt.selected = true;
+            select.appendChild(opt);
+          });
+          const curr = projectsList.find(p => p.id === currentProjectId);
+          if (curr) {
+            currentProjectSlug = curr.slug;
+            const projTag = document.getElementById('ingestion-active-project-tag');
+            if (projTag) projTag.innerText = `Project: ${curr.name} (${curr.slug})`;
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load projects:', err);
+      }
+    }
+
+    function onProjectChange(val) {
+      currentProjectId = parseInt(val);
+      const curr = projectsList.find(p => p.id === currentProjectId);
+      if (curr) {
+        currentProjectSlug = curr.slug;
+        const projTag = document.getElementById('ingestion-active-project-tag');
+        if (projTag) projTag.innerText = `Project: ${curr.name} (${curr.slug})`;
+      }
+      loadOverviewStats();
+      loadFeaturesList();
+      loadIngestionRuns();
+    }
+
+    function openNewProjectModal() {
+      document.getElementById('modal-new-project').classList.remove('hidden');
+      document.getElementById('new-proj-err').innerText = '';
+    }
+
+    function closeNewProjectModal() {
+      document.getElementById('modal-new-project').classList.add('hidden');
+    }
+
+    async function submitNewProject() {
+      const name = document.getElementById('new-proj-name').value.trim();
+      const slug = document.getElementById('new-proj-slug').value.trim();
+      const domain = document.getElementById('new-proj-domain').value.trim();
+      const desc = document.getElementById('new-proj-desc').value.trim();
+      const errEl = document.getElementById('new-proj-err');
+
+      if (!name) {
+        errEl.innerText = 'Project name is required.';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/projects', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, slug: slug || undefined, domain, description: desc }),
+        });
+        const data = await res.json();
+        if (!res.ok) {
+          errEl.innerText = data.detail || 'Failed to create project.';
+          return;
+        }
+        closeNewProjectModal();
+        await loadProjects();
+        onProjectChange(data.id);
+        switchTab('sources');
+      } catch (err) {
+        errEl.innerText = 'Network error: ' + err;
+      }
+    }
+
+    // Jira Actions
+    async function testJiraConnection() {
+      const msg = document.getElementById('jira-status-msg');
+      msg.className = 'text-[11px] text-cyan-400';
+      msg.innerText = 'Validating connection...';
+      const base_url = document.getElementById('jira-base-url').value.trim();
+      const email = document.getElementById('jira-email').value.trim();
+      const api_token = document.getElementById('jira-api-token').value.trim();
+
+      if (!base_url) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Base URL is required.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/projects/${currentProjectId}/sources/jira/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base_url, email, api_token }),
+        });
+        const data = await res.json();
+        if (data.valid) {
+          msg.className = 'text-[11px] text-emerald-400 font-semibold';
+          msg.innerText = '✓ ' + data.message;
+        } else {
+          msg.className = 'text-[11px] text-rose-400';
+          msg.innerText = '✗ ' + data.message;
+        }
+      } catch (err) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Error: ' + err;
+      }
+    }
+
+    async function saveAndSyncJira() {
+      const msg = document.getElementById('jira-status-msg');
+      const base_url = document.getElementById('jira-base-url').value.trim();
+      const email = document.getElementById('jira-email').value.trim();
+      const api_token = document.getElementById('jira-api-token').value.trim();
+
+      if (!base_url) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Base URL is required.';
+        return;
+      }
+
+      try {
+        msg.className = 'text-[11px] text-cyan-400';
+        msg.innerText = 'Connecting & initiating sync...';
+        await fetch(`/api/projects/${currentProjectId}/sources/jira`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ base_url, email, api_token }),
+        });
+        const syncRes = await fetch(`/api/projects/${currentProjectId}/sources/jira/sync?max_issues=50`, { method: 'POST' });
+        const syncData = await syncRes.json();
+        msg.className = 'text-[11px] text-emerald-400 font-semibold';
+        msg.innerText = `✓ Jira synced! Run #${syncData.id} status: ${syncData.status} (Created: ${syncData.records_created})`;
+        loadIngestionRuns();
+      } catch (err) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Sync failed: ' + err;
+      }
+    }
+
+    // GitHub Actions
+    async function testGithubConnection() {
+      const msg = document.getElementById('github-status-msg');
+      msg.className = 'text-[11px] text-cyan-400';
+      msg.innerText = 'Validating repository...';
+      const repo_url = document.getElementById('github-repo-url').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+
+      if (!repo_url) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Repository URL is required.';
+        return;
+      }
+
+      try {
+        const res = await fetch(`/api/projects/${currentProjectId}/sources/github/validate`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repo_url, token: token || undefined }),
+        });
+        const data = await res.json();
+        if (data.valid) {
+          msg.className = 'text-[11px] text-emerald-400 font-semibold';
+          msg.innerText = '✓ ' + data.message;
+        } else {
+          msg.className = 'text-[11px] text-rose-400';
+          msg.innerText = '✗ ' + data.message;
+        }
+      } catch (err) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Error: ' + err;
+      }
+    }
+
+    async function saveAndSyncGithub() {
+      const msg = document.getElementById('github-status-msg');
+      const repo_url = document.getElementById('github-repo-url').value.trim();
+      const token = document.getElementById('github-token').value.trim();
+
+      if (!repo_url) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Repository URL is required.';
+        return;
+      }
+
+      try {
+        msg.className = 'text-[11px] text-cyan-400';
+        msg.innerText = 'Connecting & initiating GitHub sync...';
+        await fetch(`/api/projects/${currentProjectId}/sources/github`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ repo_url, token: token || undefined }),
+        });
+        const syncRes = await fetch(`/api/projects/${currentProjectId}/sources/github/sync?max_commits=50`, { method: 'POST' });
+        const syncData = await syncRes.json();
+        msg.className = 'text-[11px] text-emerald-400 font-semibold';
+        msg.innerText = `✓ GitHub synced! Run #${syncData.id} status: ${syncData.status} (Created: ${syncData.records_created})`;
+        loadIngestionRuns();
+      } catch (err) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Sync failed: ' + err;
+      }
+    }
+
+    // Document Ingestion Actions
+    async function uploadDocumentFile() {
+      const msg = document.getElementById('doc-status-msg');
+      const fileInput = document.getElementById('doc-file-input');
+      if (!fileInput.files || fileInput.files.length === 0) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Please select a file to upload.';
+        return;
+      }
+
+      const file = fileInput.files[0];
+      const formData = new FormData();
+      formData.append('file', file);
+
+      msg.className = 'text-[11px] text-cyan-400';
+      msg.innerText = `Uploading and parsing ${file.name}...`;
+
+      try {
+        const res = await fetch(`/api/projects/${currentProjectId}/documents/upload`, {
+          method: 'POST',
+          body: formData,
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.className = 'text-[11px] text-emerald-400 font-semibold';
+          msg.innerText = `✓ Ingested ${data.filename} (${data.page_count} sections/pages, SHA: ${data.sha256_hash.substring(0, 10)}...)`;
+          fileInput.value = '';
+          loadIngestionRuns();
+        } else {
+          msg.className = 'text-[11px] text-rose-400';
+          msg.innerText = 'Upload failed: ' + (data.detail || 'Unknown error');
+        }
+      } catch (err) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Error: ' + err;
+      }
+    }
+
+    async function ingestDocumentFromUrl() {
+      const msg = document.getElementById('doc-status-msg');
+      const url = document.getElementById('doc-url-input').value.trim();
+      if (!url) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Document URL is required.';
+        return;
+      }
+
+      msg.className = 'text-[11px] text-cyan-400';
+      msg.innerText = 'Validating URL (SSRF check) and downloading...';
+
+      try {
+        const res = await fetch(`/api/projects/${currentProjectId}/documents/url`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url }),
+        });
+        const data = await res.json();
+        if (res.ok) {
+          msg.className = 'text-[11px] text-emerald-400 font-semibold';
+          msg.innerText = `✓ Ingested URL ${data.filename} (${data.page_count} pages)`;
+          document.getElementById('doc-url-input').value = '';
+          loadIngestionRuns();
+        } else {
+          msg.className = 'text-[11px] text-rose-400';
+          msg.innerText = 'URL ingestion failed: ' + (data.detail || 'Security/Network error');
+        }
+      } catch (err) {
+        msg.className = 'text-[11px] text-rose-400';
+        msg.innerText = 'Error: ' + err;
+      }
+    }
+
+    async function loadIngestionRuns() {
+      const tbody = document.getElementById('ingestion-runs-tbody');
+      if (!tbody) return;
+      tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Loading runs...</td></tr>';
+      try {
+        const res = await fetch(`/api/projects/${currentProjectId}/runs`);
+        const runs = await res.json();
+        if (runs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="8" class="px-4 py-6 text-center text-slate-500">No ingestion runs recorded for this project yet.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = '';
+        runs.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-slate-800/40 transition';
+          const time = r.started_at ? new Date(r.started_at).toISOString().replace('T', ' ').substring(0, 16) : '-';
+          const statusClass = r.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : (r.status === 'RUNNING' ? 'bg-blue-950 text-blue-400 border-blue-800 animate-pulse' : 'bg-rose-950 text-rose-400 border-rose-800');
+
+          tr.innerHTML = `
+            <td class="px-4 py-3 font-mono text-cyan-400 font-bold">#${r.id}</td>
+            <td class="px-4 py-3 text-slate-200 font-semibold">${r.source_system}</td>
+            <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${r.status}</span></td>
+            <td class="px-4 py-3 text-slate-300 font-mono">${r.records_discovered.toLocaleString()}</td>
+            <td class="px-4 py-3 text-emerald-400 font-mono font-semibold">${r.records_created.toLocaleString()}</td>
+            <td class="px-4 py-3 text-slate-400 font-mono">${r.records_updated} / ${r.records_skipped}</td>
+            <td class="px-4 py-3 text-slate-400 font-mono text-[11px]">${time}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-[10px] max-w-xs truncate" title="${r.checkpoint_data || ''}">${r.checkpoint_data || '-'}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+      } catch (err) {
+        tbody.innerHTML = `<tr><td colspan="8" class="px-4 py-6 text-center text-rose-500">Failed to load runs: ${err}</td></tr>`;
+      }
+    }
+
     // Initialize on page load
     window.onload = () => {
+      loadProjects();
       loadOverviewStats();
     };
   </script>
