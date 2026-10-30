@@ -18,7 +18,7 @@ def ask_question(
     db: Session = Depends(get_db),
 ):
     """Answers a natural-language historical question grounded in extracted temporal events and evidence."""
-    service = HistoricalQAService(db, dataset_name=request.dataset_name)
+    service = HistoricalQAService(db, dataset_name=request.dataset_name, project_id=request.project_id)
     return service.answer_question(request)
 
 

@@ -26,14 +26,15 @@ from app.core.logging_config import logger
 class ExtractionOrchestrator:
     VERSION = "1.0.0"
 
-    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite"):
+    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite", project_id: Optional[int] = None):
         self.db = db
         self.dataset_name = dataset_name
+        self.project_id = project_id
         self.issue_extractor = IssueExtractor(dataset_name=dataset_name)
         self.comment_extractor = CommentExtractor(dataset_name=dataset_name)
         self.commit_extractor = CommitExtractor(dataset_name=dataset_name)
         self.llm_extractor = LLMExtractor(dataset_name=dataset_name)
-        self.validator = EvidenceValidator(db=db, dataset_name=dataset_name)
+        self.validator = EvidenceValidator(db=db, dataset_name=dataset_name, project_id=project_id)
 
     def start_extraction_run(
         self,
@@ -48,6 +49,7 @@ class ExtractionOrchestrator:
         """
         run = ExtractionRun(
             dataset_name=self.dataset_name,
+            project_id=self.project_id,
             status="RUNNING",
             extraction_mode=extraction_mode,
             extractor_version=self.VERSION,

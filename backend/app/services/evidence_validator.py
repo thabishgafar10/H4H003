@@ -23,9 +23,10 @@ from app.core.logging_config import logger
 
 
 class EvidenceValidator:
-    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite"):
+    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite", project_id: Optional[int] = None):
         self.db = db
         self.dataset_name = dataset_name
+        self.project_id = project_id
         self._source_record_cache: Dict[int, str] = {}
 
     def _get_source_record_text(self, source_record_id: int) -> Optional[str]:
@@ -170,6 +171,7 @@ class EvidenceValidator:
             else:
                 temporal_event = TemporalEvent(
                     dataset_name=validated.dataset_name,
+                    project_id=self.project_id,
                     event_key=event_key,
                     event_type=validated.event_type,
                     event_time=validated.event_time,

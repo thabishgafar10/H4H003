@@ -14,14 +14,16 @@ from app.models.commit import Commit
 from app.models.issue_relationships import CommitIssueLink
 from app.models.temporal_event import TemporalEvent
 from app.models.event_evidence import EventEvidence
+from app.models.source_record import SourceRecord
 from app.schemas.graph import GraphNode, GraphEdge, GraphResponse, GraphQueryRequest
 from app.core.logging_config import logger
 
 
 class KnowledgeGraphService:
-    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite"):
+    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite", project_id: Optional[int] = None):
         self.db = db
         self.dataset_name = dataset_name
+        self.project_id = project_id
 
     def _make_node_id(self, node_type: str, raw_id: Any) -> str:
         return f"{node_type.lower()}:{raw_id}"
@@ -59,11 +61,14 @@ class KnowledgeGraphService:
 
         # 1. Fetch and create root node
         if req.start_node_type.upper() == "FEATURE":
-            feat = (
-                self.db.query(Feature)
-                .filter(Feature.id == int(req.start_node_id), Feature.dataset_name == req.dataset_name)
-                .first()
-            )
+            feat_q = self.db.query(Feature).filter(Feature.id == int(req.start_node_id))
+            if self.project_id and req.dataset_name:
+                feat_q = feat_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == req.dataset_name))
+            elif self.project_id:
+                feat_q = feat_q.filter(Feature.project_id == self.project_id)
+            elif req.dataset_name:
+                feat_q = feat_q.filter(Feature.dataset_name == req.dataset_name)
+            feat = feat_q.first()
             if not feat:
                 return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
 
@@ -81,13 +86,24 @@ class KnowledgeGraphService:
                 },
             )
         elif req.start_node_type.upper() == "ISSUE":
-            issue = (
+            issue_q = (
                 self.db.query(Issue)
+                .join(SourceRecord, Issue.source_record_id == SourceRecord.id)
                 .filter(Issue.source_issue_id == req.start_node_id)
-                .first()
             )
+            if self.project_id and req.dataset_name:
+                issue_q = issue_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
+            elif self.project_id:
+                issue_q = issue_q.filter(SourceRecord.project_id == self.project_id)
+            elif req.dataset_name:
+                issue_q = issue_q.filter(SourceRecord.dataset_name == req.dataset_name)
+            issue = issue_q.first()
             if not issue:
-                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+                fallback = self.db.query(Issue).filter(Issue.source_issue_id == req.start_node_id).first()
+                if fallback and not fallback.source_record_id:
+                    issue = fallback
+                else:
+                    return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
             nodes_dict[root_id] = GraphNode(
                 id=root_id,
                 type="ISSUE",
@@ -100,13 +116,24 @@ class KnowledgeGraphService:
                 },
             )
         elif req.start_node_type.upper() == "COMMIT":
-            cmt = (
+            cmt_q = (
                 self.db.query(Commit)
+                .join(SourceRecord, Commit.source_record_id == SourceRecord.id)
                 .filter(Commit.commit_hash == req.start_node_id)
-                .first()
             )
+            if self.project_id and req.dataset_name:
+                cmt_q = cmt_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
+            elif self.project_id:
+                cmt_q = cmt_q.filter(SourceRecord.project_id == self.project_id)
+            elif req.dataset_name:
+                cmt_q = cmt_q.filter(SourceRecord.dataset_name == req.dataset_name)
+            cmt = cmt_q.first()
             if not cmt:
-                return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
+                fallback = self.db.query(Commit).filter(Commit.commit_hash == req.start_node_id).first()
+                if fallback and not fallback.source_record_id:
+                    cmt = fallback
+                else:
+                    return GraphResponse(root_node_id=root_id, node_count=0, edge_count=0, nodes=[], edges=[])
             nodes_dict[root_id] = GraphNode(
                 id=root_id,
                 type="COMMIT",
@@ -255,11 +282,25 @@ class KnowledgeGraphService:
             if link.record_type == "issue":
                 target_node_id = self._make_node_id("issue", link.record_id)
                 if target_node_id not in nodes:
-                    issue = (
+                    issue_q = (
                         self.db.query(Issue)
+                        .join(SourceRecord, Issue.source_record_id == SourceRecord.id)
                         .filter(Issue.source_issue_id == link.record_id)
-                        .first()
                     )
+                    if self.project_id and req.dataset_name:
+                        issue_q = issue_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
+                    elif self.project_id:
+                        issue_q = issue_q.filter(SourceRecord.project_id == self.project_id)
+                    elif req.dataset_name:
+                        issue_q = issue_q.filter(SourceRecord.dataset_name == req.dataset_name)
+                    issue = issue_q.first()
+                    if not issue:
+                        fallback = self.db.query(Issue).filter(Issue.source_issue_id == link.record_id).first()
+                        if fallback and not fallback.source_record_id:
+                            issue = fallback
+                        else:
+                            continue
+
                     lbl = issue.summary[:40] if issue and issue.summary else link.record_id
                     nodes[target_node_id] = GraphNode(
                         id=target_node_id,
@@ -290,19 +331,27 @@ class KnowledgeGraphService:
                     continue
                 target_node_id = self._make_node_id("temporal_event", ev_id)
                 if target_node_id not in nodes:
-                    ev = self.db.query(TemporalEvent).filter(TemporalEvent.id == ev_id).first()
-                    if ev:
-                        nodes[target_node_id] = GraphNode(
-                            id=target_node_id,
-                            type="TEMPORAL_EVENT",
-                            label=f"{ev.event_type}: {ev.subject[:35]}",
-                            properties={
-                                "event_type": ev.event_type,
-                                "timestamp": ev.event_time.isoformat() if ev.event_time else None,
-                                "actor": ev.actor,
-                            },
-                        )
-                        next_frontier.add(target_node_id)
+                    ev_q = self.db.query(TemporalEvent).filter(TemporalEvent.id == ev_id)
+                    if self.project_id and req.dataset_name:
+                        ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == req.dataset_name))
+                    elif self.project_id:
+                        ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+                    elif req.dataset_name:
+                        ev_q = ev_q.filter(TemporalEvent.dataset_name == req.dataset_name)
+                    ev = ev_q.first()
+                    if not ev:
+                        continue
+                    nodes[target_node_id] = GraphNode(
+                        id=target_node_id,
+                        type="TEMPORAL_EVENT",
+                        label=f"{ev.event_type}: {ev.subject[:35]}",
+                        properties={
+                            "event_type": ev.event_type,
+                            "timestamp": ev.event_time.isoformat() if ev.event_time else None,
+                            "actor": ev.actor,
+                        },
+                    )
+                    next_frontier.add(target_node_id)
 
                 rel_type = "FEATURE_RELATED_TO_EVENT"
                 edge_id = self._make_edge_id(feature_node_id, target_node_id, rel_type)
@@ -345,12 +394,32 @@ class KnowledgeGraphService:
             edges[e_id] = GraphEdge(id=e_id, source=c_node_id, target=issue_node_id, type="CONTRIBUTOR_REPORTED_ISSUE")
 
         # 2. Linked Commits
-        commit_links = (
+        commit_links_q = (
             self.db.query(CommitIssueLink)
+            .join(Commit, CommitIssueLink.commit_hash == Commit.commit_hash)
+            .join(SourceRecord, Commit.source_record_id == SourceRecord.id)
             .filter(CommitIssueLink.source_issue_id == issue_key)
-            .limit(10)
-            .all()
         )
+        if self.project_id and req.dataset_name:
+            commit_links_q = commit_links_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == req.dataset_name))
+        elif self.project_id:
+            commit_links_q = commit_links_q.filter(SourceRecord.project_id == self.project_id)
+        elif req.dataset_name:
+            commit_links_q = commit_links_q.filter(SourceRecord.dataset_name == req.dataset_name)
+        commit_links = commit_links_q.limit(10).all()
+        if not commit_links:
+            fallback_links = (
+                self.db.query(CommitIssueLink)
+                .filter(CommitIssueLink.source_issue_id == issue_key)
+                .limit(10)
+                .all()
+            )
+            # Only use fallback if commit has no source_record (e.g. synthetic test fixture)
+            commit_links = [
+                cl for cl in fallback_links
+                if (not self.db.query(Commit).filter(Commit.commit_hash == cl.commit_hash).first() or
+                    not self.db.query(Commit).filter(Commit.commit_hash == cl.commit_hash).first().source_record_id)
+            ]
         for cl in commit_links:
             if len(nodes) >= req.max_nodes:
                 return
@@ -414,7 +483,14 @@ class KnowledgeGraphService:
         next_frontier: Set[str],
         req: GraphQueryRequest,
     ):
-        ev = self.db.query(TemporalEvent).filter(TemporalEvent.id == event_id).first()
+        ev_q = self.db.query(TemporalEvent).filter(TemporalEvent.id == event_id)
+        if self.project_id and req.dataset_name:
+            ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == req.dataset_name))
+        elif self.project_id:
+            ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+        elif req.dataset_name:
+            ev_q = ev_q.filter(TemporalEvent.dataset_name == req.dataset_name)
+        ev = ev_q.first()
         if not ev:
             return
 

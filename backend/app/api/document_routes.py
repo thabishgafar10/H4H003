@@ -31,6 +31,8 @@ async def upload_document(
         if not doc or run.status == "FAILED":
             raise HTTPException(status_code=400, detail=run.error_summary or "Document processing failed.")
         return doc
+    except HTTPException:
+        raise
     except ValueError as val_err:
         raise HTTPException(status_code=400, detail=str(val_err))
     except Exception as e:
@@ -56,6 +58,8 @@ def ingest_document_from_url(
         if not doc or run.status == "FAILED":
             raise HTTPException(status_code=400, detail=run.error_summary or "Document URL ingestion failed.")
         return doc
+    except HTTPException:
+        raise
     except ValueError as val_err:
         raise HTTPException(status_code=400, detail=str(val_err))
     except Exception as e:

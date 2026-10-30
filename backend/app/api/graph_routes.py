@@ -22,10 +22,11 @@ def get_feature_graph(
     start_time: Optional[datetime] = None,
     end_time: Optional[datetime] = None,
     dataset_name: str = Query("KafkaSQLite"),
+    project_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     """Returns the multi-hop temporal knowledge graph centered on a canonical feature."""
-    service = KnowledgeGraphService(db, dataset_name=dataset_name)
+    service = KnowledgeGraphService(db, dataset_name=dataset_name, project_id=project_id)
     graph = service.get_feature_graph(
         feature_id=feature_id,
         depth=depth,
@@ -45,16 +46,18 @@ def get_node_subgraph(
     depth: int = Query(2, ge=1, le=4),
     max_nodes: int = Query(80, ge=5, le=300),
     dataset_name: str = Query("KafkaSQLite"),
+    project_id: Optional[int] = Query(None),
     db: Session = Depends(get_db),
 ):
     """Returns the neighborhood subgraph centered on an arbitrary node (feature, issue, commit)."""
-    service = KnowledgeGraphService(db, dataset_name=dataset_name)
+    service = KnowledgeGraphService(db, dataset_name=dataset_name, project_id=project_id)
     req = GraphQueryRequest(
         start_node_type=node_type.upper(),
         start_node_id=node_id,
         depth=depth,
         max_nodes=max_nodes,
         dataset_name=dataset_name,
+        project_id=project_id,
     )
     graph = service.query_graph(req)
     if graph.node_count == 0:
@@ -68,7 +71,7 @@ def query_graph(
     db: Session = Depends(get_db),
 ):
     """Executes a custom parameterized graph traversal with filters and bounds."""
-    service = KnowledgeGraphService(db, dataset_name=request.dataset_name)
+    service = KnowledgeGraphService(db, dataset_name=request.dataset_name, project_id=request.project_id)
     return service.query_graph(request)
 
 

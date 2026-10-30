@@ -25,7 +25,8 @@ router = APIRouter()
 def get_features(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=200),
-    dataset_name: Optional[str] = Query("KafkaSQLite"),
+    dataset_name: Optional[str] = Query(None),
+    project_id: Optional[int] = Query(None),
     category: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
     q: Optional[str] = Query(None),
@@ -38,7 +39,11 @@ def get_features(
             joinedload(Feature.record_links),
         )
     )
-    if dataset_name:
+    if project_id and dataset_name:
+        query = query.filter((Feature.project_id == project_id) | (Feature.dataset_name == dataset_name))
+    elif project_id:
+        query = query.filter(Feature.project_id == project_id)
+    elif dataset_name:
         query = query.filter(Feature.dataset_name == dataset_name)
     if category:
         query = query.filter(Feature.feature_category == category.upper())
@@ -55,27 +60,50 @@ def get_features(
 
 
 @router.get("/{feature_id}", response_model=FeatureResponse)
-def get_feature_by_id(feature_id: int, db: Session = Depends(get_db)):
-    feature = (
+def get_feature_by_id(
+    feature_id: int,
+    project_id: Optional[int] = Query(None),
+    dataset_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    query = (
         db.query(Feature)
         .options(
             joinedload(Feature.aliases),
             joinedload(Feature.record_links),
         )
         .filter(Feature.id == feature_id)
-        .first()
     )
+    if project_id and dataset_name:
+        query = query.filter((Feature.project_id == project_id) | (Feature.dataset_name == dataset_name))
+    elif project_id:
+        query = query.filter(Feature.project_id == project_id)
+    elif dataset_name:
+        query = query.filter(Feature.dataset_name == dataset_name)
+    feature = query.first()
     if not feature:
         raise HTTPException(status_code=404, detail=f"Feature with id {feature_id} not found")
     return feature
 
 
 @router.get("/{feature_id}/history", response_model=List[TemporalEventResponse])
-def get_feature_history(feature_id: int, db: Session = Depends(get_db)):
+def get_feature_history(
+    feature_id: int,
+    project_id: Optional[int] = Query(None),
+    dataset_name: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
     """
     Returns the chronological timeline of events linked to this feature.
     """
-    feature = db.query(Feature).filter(Feature.id == feature_id).first()
+    f_query = db.query(Feature).filter(Feature.id == feature_id)
+    if project_id and dataset_name:
+        f_query = f_query.filter((Feature.project_id == project_id) | (Feature.dataset_name == dataset_name))
+    elif project_id:
+        f_query = f_query.filter(Feature.project_id == project_id)
+    elif dataset_name:
+        f_query = f_query.filter(Feature.dataset_name == dataset_name)
+    feature = f_query.first()
     if not feature:
         raise HTTPException(status_code=404, detail=f"Feature with id {feature_id} not found")
 
@@ -101,16 +129,22 @@ def get_feature_history(feature_id: int, db: Session = Depends(get_db)):
     )
     issue_ids = [l.record_id for l in issue_links]
 
-    events = (
+    ev_query = (
         db.query(TemporalEvent)
         .options(joinedload(TemporalEvent.evidence))
         .filter(
             (TemporalEvent.id.in_(event_ids)) |
             (TemporalEvent.issue_id.in_(issue_ids))
         )
-        .order_by(TemporalEvent.event_time.asc().nullslast(), TemporalEvent.id.asc())
-        .all()
     )
+    if feature.project_id:
+        ev_query = ev_query.filter(
+            (TemporalEvent.project_id == feature.project_id) | (TemporalEvent.dataset_name == feature.dataset_name)
+        )
+    elif feature.dataset_name:
+        ev_query = ev_query.filter(TemporalEvent.dataset_name == feature.dataset_name)
+
+    events = ev_query.order_by(TemporalEvent.event_time.asc().nullslast(), TemporalEvent.id.asc()).all()
     return events
 
 
@@ -119,13 +153,14 @@ def resolve_feature_identity(
     body: Optional[FeatureResolveRequest] = None,
     query: Optional[str] = Query(None, description="Feature name, KIP, alias, or description text"),
     dataset_name: Optional[str] = Query("KafkaSQLite"),
+    project_id: Optional[int] = Query(None),
     db: Session = Depends(get_db)
 ):
     q_str = (body.query if body else None) or query
     if not q_str:
         raise HTTPException(status_code=422, detail="Query parameter or JSON body required")
     ds = (body.dataset_name if body and body.dataset_name else None) or dataset_name or "KafkaSQLite"
-    service = FeatureService(db, dataset_name=ds)
+    service = FeatureService(db, dataset_name=ds, project_id=project_id)
     matches = service.resolve_feature(q_str)
 
     candidate_responses = [

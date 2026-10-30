@@ -39,3 +39,4 @@ class GraphQueryRequest(BaseModel):
     end_time: Optional[datetime] = Field(None, description="Filter elements before this timestamp")
     node_types: Optional[List[str]] = Field(None, description="Optional node type filter")
     dataset_name: str = Field("KafkaSQLite", description="Dataset scope")
+    project_id: Optional[int] = Field(None, description="Project ID scope")

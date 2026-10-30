@@ -15,6 +15,7 @@ from app.models.temporal_event import TemporalEvent
 from app.models.event_evidence import EventEvidence
 from app.models.issue import Issue
 from app.models.commit import Commit
+from app.models.source_record import SourceRecord
 from app.schemas.qa import QAResponse, QATimelineEvent, QACitation, SampleQuestion, QARequest
 from app.services.feature_service import FeatureService
 from app.services.knowledge_graph_service import KnowledgeGraphService
@@ -30,11 +31,12 @@ RE_RENAME = re.compile(r"\b(renamed|called|formerly|previously|superseded|replac
 
 
 class HistoricalQAService:
-    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite"):
+    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite", project_id: Optional[int] = None):
         self.db = db
         self.dataset_name = dataset_name
-        self.feature_service = FeatureService(db, dataset_name=dataset_name)
-        self.graph_service = KnowledgeGraphService(db, dataset_name=dataset_name)
+        self.project_id = project_id
+        self.feature_service = FeatureService(db, dataset_name=dataset_name, project_id=project_id)
+        self.graph_service = KnowledgeGraphService(db, dataset_name=dataset_name, project_id=project_id)
 
     def answer_question(self, req: QARequest) -> QAResponse:
         """
@@ -44,6 +46,12 @@ class HistoricalQAService:
         3. Retrieve chronological events and verbatim evidence
         4. Synthesize verifiable grounded answer
         """
+        req_project_id = getattr(req, "project_id", None) or self.project_id
+        if req_project_id and not self.project_id:
+            self.project_id = req_project_id
+            self.feature_service.project_id = req_project_id
+            self.graph_service.project_id = req_project_id
+
         query_text = req.query.strip()
         if not query_text:
             return QAResponse(
@@ -62,11 +70,27 @@ class HistoricalQAService:
             primary_feature = candidates[0].feature
             feature_confidence = candidates[0].confidence
         else:
-            # Check for issue key in query (e.g., KAFKA-1234)
-            m_issue = re.search(r"\b(KAFKA-\d+)\b", query_text, re.IGNORECASE)
+            # Check for issue key in query (e.g., KAFKA-1234 or PROJ-123)
+            m_issue = re.search(r"\b([A-Za-z0-9_\-]+-\d+)\b", query_text, re.IGNORECASE)
             if m_issue:
                 issue_key = m_issue.group(1).upper()
-                issue = self.db.query(Issue).filter(Issue.source_issue_id == issue_key).first()
+                issue_q = (
+                    self.db.query(Issue)
+                    .join(SourceRecord, Issue.source_record_id == SourceRecord.id)
+                    .filter(Issue.source_issue_id == issue_key)
+                )
+                if self.project_id and self.dataset_name:
+                    issue_q = issue_q.filter((SourceRecord.project_id == self.project_id) | (SourceRecord.dataset_name == self.dataset_name))
+                elif self.project_id:
+                    issue_q = issue_q.filter(SourceRecord.project_id == self.project_id)
+                elif self.dataset_name:
+                    issue_q = issue_q.filter(SourceRecord.dataset_name == self.dataset_name)
+                issue = issue_q.first()
+                if not issue:
+                    fallback = self.db.query(Issue).filter(Issue.source_issue_id == issue_key).first()
+                    if fallback and not fallback.source_record_id:
+                        issue = fallback
+
                 if issue:
                     # Look up if this issue is linked to a feature
                     link = (
@@ -94,40 +118,41 @@ class HistoricalQAService:
                 if link.record_id.isdigit()
             ]
             if linked_event_ids:
-                events = (
-                    self.db.query(TemporalEvent)
-                    .filter(TemporalEvent.id.in_(linked_event_ids))
-                    .order_by(TemporalEvent.event_time.asc().nullslast())
-                    .all()
-                )
+                ev_q = self.db.query(TemporalEvent).filter(TemporalEvent.id.in_(linked_event_ids))
+                if self.project_id and self.dataset_name:
+                    ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == self.dataset_name))
+                elif self.project_id:
+                    ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+                elif self.dataset_name:
+                    ev_q = ev_q.filter(TemporalEvent.dataset_name == self.dataset_name)
+                events = ev_q.order_by(TemporalEvent.event_time.asc().nullslast()).all()
 
             # If no linked events directly found, search by canonical name or alias tokens
             if not events:
                 names = [primary_feature.canonical_name] + [a.alias_name for a in primary_feature.aliases]
                 filters = [TemporalEvent.subject.ilike(f"%{n}%") for n in names if len(n) > 3]
                 if filters:
-                    events = (
-                        self.db.query(TemporalEvent)
-                        .filter(
-                            TemporalEvent.dataset_name == self.dataset_name,
-                            or_(*filters)
-                        )
-                        .order_by(TemporalEvent.event_time.asc().nullslast())
-                        .limit(15)
-                        .all()
-                    )
+                    ev_q = self.db.query(TemporalEvent).filter(or_(*filters))
+                    if self.project_id and self.dataset_name:
+                        ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == self.dataset_name))
+                    elif self.project_id:
+                        ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+                    elif self.dataset_name:
+                        ev_q = ev_q.filter(TemporalEvent.dataset_name == self.dataset_name)
+                    events = ev_q.order_by(TemporalEvent.event_time.asc().nullslast()).limit(15).all()
         else:
             # General keyword search in TemporalEvents
             keywords = [w for w in re.split(r"\s+", query_text) if len(w) > 3 and w.lower() not in {"what", "when", "where", "which", "history", "about", "kafka"}]
             if keywords:
                 filters = [TemporalEvent.subject.ilike(f"%{k}%") for k in keywords[:3]]
-                events = (
-                    self.db.query(TemporalEvent)
-                    .filter(TemporalEvent.dataset_name == self.dataset_name, or_(*filters))
-                    .order_by(TemporalEvent.event_time.asc().nullslast())
-                    .limit(10)
-                    .all()
-                )
+                ev_q = self.db.query(TemporalEvent).filter(or_(*filters))
+                if self.project_id and self.dataset_name:
+                    ev_q = ev_q.filter((TemporalEvent.project_id == self.project_id) | (TemporalEvent.dataset_name == self.dataset_name))
+                elif self.project_id:
+                    ev_q = ev_q.filter(TemporalEvent.project_id == self.project_id)
+                elif self.dataset_name:
+                    ev_q = ev_q.filter(TemporalEvent.dataset_name == self.dataset_name)
+                events = ev_q.order_by(TemporalEvent.event_time.asc().nullslast()).limit(10).all()
 
         # 3. Build Timeline & Extract Evidence Citations
         for ev in events:

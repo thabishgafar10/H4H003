@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ExtractionRunRequest(BaseModel):
     dataset_name: str = "KafkaSQLite"
+    project_id: Optional[int] = None
     extraction_mode: str = "DETERMINISTIC"  # DETERMINISTIC or HYBRID
     chunk_size: int = 500
     max_issues: Optional[int] = None
@@ -21,6 +22,7 @@ class ExtractionRunResponse(BaseModel):
 
     id: int
     dataset_name: str
+    project_id: Optional[int] = None
     status: str
     extraction_mode: str
     extractor_version: str

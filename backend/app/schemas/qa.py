@@ -27,6 +27,7 @@ class QATimelineEvent(BaseModel):
 class QARequest(BaseModel):
     query: str = Field(..., description="Natural language question about product evolution")
     dataset_name: str = Field("KafkaSQLite", description="Dataset scope")
+    project_id: Optional[int] = Field(None, description="Optional project ID scope")
     include_graph: bool = Field(False, description="Optionally include neighborhood graph")
 
 

@@ -118,9 +118,10 @@ class ResolutionCandidate:
 
 
 class FeatureService:
-    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite"):
+    def __init__(self, db: Session, dataset_name: str = "KafkaSQLite", project_id: Optional[int] = None):
         self.db = db
         self.dataset_name = dataset_name
+        self.project_id = project_id
 
     def get_or_create_feature(
         self,
@@ -133,14 +134,14 @@ class FeatureService:
         last_observed_at: Optional[datetime] = None,
     ) -> Feature:
         norm = normalize_text(canonical_name)
-        existing = (
-            self.db.query(Feature)
-            .filter(
-                Feature.dataset_name == self.dataset_name,
-                Feature.normalized_name == norm,
-            )
-            .first()
-        )
+        existing_q = self.db.query(Feature).filter(Feature.normalized_name == norm)
+        if self.project_id and self.dataset_name:
+            existing_q = existing_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == self.dataset_name))
+        elif self.project_id:
+            existing_q = existing_q.filter(Feature.project_id == self.project_id)
+        elif self.dataset_name:
+            existing_q = existing_q.filter(Feature.dataset_name == self.dataset_name)
+        existing = existing_q.first()
         if existing:
             # Update timestamps if earlier or later
             updated = False
@@ -160,6 +161,7 @@ class FeatureService:
 
         feature = Feature(
             dataset_name=self.dataset_name,
+            project_id=self.project_id,
             canonical_name=canonical_name.strip(),
             normalized_name=norm,
             description=description,
@@ -312,15 +314,18 @@ class FeatureService:
         kip_match = RE_KIP_KEY.search(query)
         if kip_match:
             kip_str = kip_match.group(1).upper()
-            kip_alias = (
+            kip_q = (
                 self.db.query(FeatureAlias)
                 .join(Feature)
-                .filter(
-                    Feature.dataset_name == self.dataset_name,
-                    FeatureAlias.alias_name.ilike(kip_str),
-                )
-                .first()
+                .filter(FeatureAlias.alias_name.ilike(kip_str))
             )
+            if self.project_id and self.dataset_name:
+                kip_q = kip_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == self.dataset_name))
+            elif self.project_id:
+                kip_q = kip_q.filter(Feature.project_id == self.project_id)
+            elif self.dataset_name:
+                kip_q = kip_q.filter(Feature.dataset_name == self.dataset_name)
+            kip_alias = kip_q.first()
             if kip_alias:
                 candidates.append(
                     ResolutionCandidate(
@@ -333,14 +338,14 @@ class FeatureService:
                 )
 
         # 2. Exact Canonical Match
-        exact_feature = (
-            self.db.query(Feature)
-            .filter(
-                Feature.dataset_name == self.dataset_name,
-                Feature.normalized_name == norm_query,
-            )
-            .first()
-        )
+        exact_q = self.db.query(Feature).filter(Feature.normalized_name == norm_query)
+        if self.project_id and self.dataset_name:
+            exact_q = exact_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == self.dataset_name))
+        elif self.project_id:
+            exact_q = exact_q.filter(Feature.project_id == self.project_id)
+        elif self.dataset_name:
+            exact_q = exact_q.filter(Feature.dataset_name == self.dataset_name)
+        exact_feature = exact_q.first()
         if exact_feature:
             candidates.append(
                 ResolutionCandidate(
@@ -353,15 +358,18 @@ class FeatureService:
             )
 
         # 3. Exact Alias Match
-        exact_aliases = (
+        alias_q = (
             self.db.query(FeatureAlias)
             .join(Feature)
-            .filter(
-                Feature.dataset_name == self.dataset_name,
-                FeatureAlias.normalized_alias == norm_query,
-            )
-            .all()
+            .filter(FeatureAlias.normalized_alias == norm_query)
         )
+        if self.project_id and self.dataset_name:
+            alias_q = alias_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == self.dataset_name))
+        elif self.project_id:
+            alias_q = alias_q.filter(Feature.project_id == self.project_id)
+        elif self.dataset_name:
+            alias_q = alias_q.filter(Feature.dataset_name == self.dataset_name)
+        exact_aliases = alias_q.all()
         for al in exact_aliases:
             if not any(c.feature.id == al.feature_id for c in candidates):
                 candidates.append(
@@ -379,7 +387,14 @@ class FeatureService:
             return candidates
 
         # 4. Fuzzy Similarity Matching against all features & aliases
-        all_features = self.db.query(Feature).filter(Feature.dataset_name == self.dataset_name).all()
+        all_q = self.db.query(Feature)
+        if self.project_id and self.dataset_name:
+            all_q = all_q.filter((Feature.project_id == self.project_id) | (Feature.dataset_name == self.dataset_name))
+        elif self.project_id:
+            all_q = all_q.filter(Feature.project_id == self.project_id)
+        elif self.dataset_name:
+            all_q = all_q.filter(Feature.dataset_name == self.dataset_name)
+        all_features = all_q.all()
         for feat in all_features:
             score = compute_string_similarity(norm_query, feat.canonical_name)
             if score >= 0.60:
