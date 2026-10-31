@@ -22,7 +22,7 @@ env/
 .coverage
 htmlcov/
 
-# Application databases
+# Application databases (too large for GitHub, >100MB)
 backend/data/
 *.db
 *.sqlite
