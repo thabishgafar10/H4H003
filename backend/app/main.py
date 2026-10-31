@@ -3,6 +3,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse, Response
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.api.routes import router
 from app.api.ingestion_routes import router as ingestion_router
@@ -28,6 +29,15 @@ app = FastAPI(
     lifespan=lifespan,
 )
 
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+    expose_headers=["*"],
+)
+
 static_dir = Path(__file__).resolve().parent / "static"
 if static_dir.exists():
     app.mount("/static", StaticFiles(directory=str(static_dir)), name="static")
@@ -45,7 +55,7 @@ app.include_router(qa_router)
 
 @app.get("/")
 def root():
-    return {"message": "Welcome to the Temporal Product Knowledge System"}
+    return FileResponse(static_dir / "index.html")
 
 @app.get("/dashboard", response_class=FileResponse)
 def get_dashboard():

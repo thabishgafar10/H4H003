@@ -4,7 +4,7 @@ API routes for querying Temporal Events, Evidence, and Issue Timelines.
 
 from datetime import datetime
 from typing import List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Response
 from sqlalchemy import func
 from sqlalchemy.orm import Session, joinedload
 
@@ -45,6 +45,7 @@ def get_event_taxonomy():
 
 @router.get("", response_model=List[TemporalEventResponse])
 def get_temporal_events(
+    response: Response,
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=500),
     dataset_name: Optional[str] = Query(None),
@@ -53,6 +54,7 @@ def get_temporal_events(
     issue_id: Optional[str] = Query(None),
     commit_hash: Optional[str] = Query(None),
     actor: Optional[str] = Query(None),
+    search: Optional[str] = Query(None),
     start_date: Optional[datetime] = Query(None),
     end_date: Optional[datetime] = Query(None),
     db: Session = Depends(get_db)
@@ -65,18 +67,35 @@ def get_temporal_events(
         query = query.filter(TemporalEvent.project_id == project_id)
     elif dataset_name:
         query = query.filter(TemporalEvent.dataset_name == dataset_name)
-    if event_type:
-        query = query.filter(TemporalEvent.event_type == event_type)
-    if issue_id:
-        query = query.filter(TemporalEvent.issue_id == issue_id)
-    if commit_hash:
-        query = query.filter(TemporalEvent.commit_hash == commit_hash)
-    if actor:
-        query = query.filter(TemporalEvent.actor.ilike(f"%{actor}%"))
+
+    if event_type and event_type.strip():
+        cleaned_type = event_type.strip().upper()
+        query = query.filter(func.upper(TemporalEvent.event_type) == cleaned_type)
+
+    if issue_id and issue_id.strip():
+        cleaned_issue = issue_id.strip().upper()
+        query = query.filter(func.upper(TemporalEvent.issue_id) == cleaned_issue)
+
+    if commit_hash and commit_hash.strip():
+        cleaned_hash = commit_hash.strip().lower()
+        query = query.filter(func.lower(TemporalEvent.commit_hash).like(f"{cleaned_hash}%"))
+
+    if actor and actor.strip():
+        cleaned_actor = actor.strip()
+        query = query.filter(TemporalEvent.actor.ilike(f"%{cleaned_actor}%"))
+
+    if search and search.strip():
+        term = f"%{search.strip()}%"
+        query = query.filter((TemporalEvent.subject.ilike(term)) | (TemporalEvent.description.ilike(term)))
+
     if start_date:
         query = query.filter(TemporalEvent.event_time >= start_date)
     if end_date:
         query = query.filter(TemporalEvent.event_time <= end_date)
+
+    # Compute total count for client-side pagination & filter feedback
+    total_count = query.count()
+    response.headers["X-Total-Count"] = str(total_count)
 
     return query.order_by(TemporalEvent.event_time.asc().nullslast(), TemporalEvent.id.asc()).offset(skip).limit(limit).all()
 

@@ -33,8 +33,10 @@
     }
   </script>
   <style>
-    body { background-color: #0b0f19; color: #f1f5f9; font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; }
-    .nav-tab.active { border-bottom: 2px solid #38bdf8; color: #38bdf8; font-weight: 600; }
+    body { background-color: #f8fafc; color: #0f172a; font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; }
+    .nav-tab { color: #64748b; font-weight: 500; border-bottom: 2px solid transparent; }
+    .nav-tab:hover { color: #0f172a; }
+    .nav-tab.active { border-bottom: 2px solid #2563eb; color: #2563eb; font-weight: 600; }
     .timeline-line::before {
       content: '';
       position: absolute;
@@ -42,81 +44,81 @@
       bottom: 0;
       left: 19px;
       width: 2px;
-      background: #334155;
+      background: #e2e8f0;
     }
-    .node-feature { fill: #8b5cf6; stroke: #c4b5fd; stroke-width: 2.5; }
-    .node-alias { fill: #6366f1; stroke: #a5b4fc; stroke-width: 2; }
-    .node-issue { fill: #3b82f6; stroke: #93c5fd; stroke-width: 2; }
-    .node-commit { fill: #10b981; stroke: #6ee7b7; stroke-width: 2; }
-    .node-event { fill: #f59e0b; stroke: #fde68a; stroke-width: 2; }
-    .node-contributor { fill: #06b6d4; stroke: #a5f3fc; stroke-width: 2; }
-    .node-evidence { fill: #f43f5e; stroke: #fecdd3; stroke-width: 2; }
-    .edge-line { stroke: #475569; stroke-width: 1.5; stroke-dasharray: 4,2; transition: stroke 0.2s; }
-    .edge-line:hover { stroke: #38bdf8; stroke-width: 2.5; stroke-dasharray: none; }
+    .node-feature { fill: #eef2ff; stroke: #6366f1; stroke-width: 2; }
+    .node-alias { fill: #f5f3ff; stroke: #8b5cf6; stroke-width: 2; }
+    .node-issue { fill: #eff6ff; stroke: #3b82f6; stroke-width: 2; }
+    .node-commit { fill: #ecfdf5; stroke: #10b981; stroke-width: 2; }
+    .node-event { fill: #fffbeb; stroke: #f59e0b; stroke-width: 2; }
+    .node-contributor { fill: #f0fdfa; stroke: #0d9488; stroke-width: 2; }
+    .node-evidence { fill: #fff1f2; stroke: #f43f5e; stroke-width: 2; }
+    .edge-line { stroke: #cbd5e1; stroke-width: 1.5; stroke-dasharray: 4,2; transition: stroke 0.2s; }
+    .edge-line:hover { stroke: #2563eb; stroke-width: 2.5; stroke-dasharray: none; }
     /* Scrollbar styling */
     ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #0b0f19; }
-    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
-    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    ::-webkit-scrollbar-track { background: #f8fafc; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
   </style>
 </head>
 <body class="min-h-screen flex flex-col">
 
   <!-- Header -->
-  <header class="border-b border-gray-800 bg-slate-900/90 backdrop-blur sticky top-0 z-40">
+  <header class="border-b border-slate-200/90 bg-white/95 backdrop-blur sticky top-0 z-40 shadow-xs">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex justify-between items-center h-16">
       <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('overview')">
-        <div class="w-10 h-10 rounded-lg bg-gradient-to-tr from-cyan-600 via-indigo-600 to-emerald-500 flex items-center justify-center shadow-lg shadow-cyan-500/20">
-          <i class="fa-solid fa-clock-rotate-left text-white text-xl"></i>
+        <div class="w-9 h-9 rounded-lg bg-slate-900 flex items-center justify-center text-white shadow-xs">
+          <i class="fa-solid fa-clock-rotate-left text-sm"></i>
         </div>
         <div>
-          <h1 class="text-lg font-bold tracking-tight bg-gradient-to-r from-white via-slate-200 to-slate-400 bg-clip-text text-transparent">
-            Temporal Product Knowledge System
+          <h1 class="text-sm font-semibold tracking-tight text-slate-900">
+            Temporal Product Knowledge
           </h1>
-          <p class="text-xs text-slate-400">Multi-Source Product Intelligence & Evolution Engine</p>
+          <p class="text-[11px] text-slate-500 font-normal">Multi-Source Product Intelligence & Evolution Engine</p>
         </div>
       </div>
 
       <!-- Navigation Tabs -->
       <nav class="flex space-x-4 text-sm overflow-x-auto">
-        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-5 text-slate-300 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('overview')" id="tab-overview" class="nav-tab active py-5 text-blue-600 font-semibold transition whitespace-nowrap">
           <i class="fa-solid fa-chart-pie mr-1.5"></i> Overview
         </button>
-        <button onclick="switchTab('sources')" id="tab-sources" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('sources')" id="tab-sources" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-cloud-arrow-up mr-1.5"></i> Connect Sources
         </button>
-        <button onclick="switchTab('features')" id="tab-features" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('features')" id="tab-features" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-shapes mr-1.5"></i> Features
         </button>
-        <button onclick="switchTab('graph')" id="tab-graph" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('graph')" id="tab-graph" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-diagram-project mr-1.5"></i> Knowledge Graph
         </button>
-        <button onclick="switchTab('qa')" id="tab-qa" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('qa')" id="tab-qa" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-brain mr-1.5"></i> Historical QA
         </button>
-        <button onclick="switchTab('explorer')" id="tab-explorer" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('explorer')" id="tab-explorer" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-list-check mr-1.5"></i> Events
         </button>
-        <button onclick="switchTab('timeline')" id="tab-timeline" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('timeline')" id="tab-timeline" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-timeline mr-1.5"></i> Issue Timeline
         </button>
-        <button onclick="switchTab('extraction')" id="tab-extraction" class="nav-tab py-5 text-slate-400 hover:text-white transition whitespace-nowrap">
+        <button onclick="switchTab('extraction')" id="tab-extraction" class="nav-tab py-5 text-slate-600 hover:text-slate-900 font-medium transition whitespace-nowrap">
           <i class="fa-solid fa-bolt mr-1.5"></i> Extraction
         </button>
       </nav>
 
       <!-- Project Selector & System Status -->
       <div class="flex items-center space-x-2">
-        <div class="flex items-center space-x-1.5 bg-slate-800/90 border border-slate-700 rounded-lg px-2.5 py-1 shadow-inner">
+        <div class="flex items-center space-x-1.5 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1.5 shadow-2xs">
           <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" title="System Active"></span>
-          <select id="global-project-select" onchange="onProjectChange(this.value)" class="bg-transparent text-xs text-cyan-300 font-semibold focus:outline-none cursor-pointer">
+          <select id="global-project-select" onchange="onProjectChange(this.value)" class="bg-transparent text-xs text-slate-700 font-medium focus:outline-none cursor-pointer">
             <option value="1">Apache Kafka (kafka)</option>
           </select>
         </div>
-        <button onclick="openNewProjectModal()" title="Onboard new project" class="text-xs bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-2.5 py-1.5 rounded-lg border border-indigo-500/30 flex items-center transition shadow">
+        <button onclick="openNewProjectModal()" title="Onboard new project" class="text-xs bg-slate-900 hover:bg-slate-800 text-white font-medium px-2.5 py-1.5 rounded-lg border border-slate-900 flex items-center transition shadow-xs">
           <i class="fa-solid fa-plus mr-1"></i> New
         </button>
-        <a href="/docs" target="_blank" class="text-xs text-slate-400 hover:text-cyan-400 border border-slate-700 px-3 py-1.5 rounded-md transition flex items-center hidden lg:flex">
+        <a href="/docs" target="_blank" class="text-xs text-slate-600 hover:text-slate-900 hover:bg-slate-50 border border-slate-200 px-3 py-1.5 rounded-lg transition flex items-center hidden lg:flex shadow-2xs">
           <i class="fa-solid fa-book-open mr-1.5"></i> API Docs
         </a>
       </div>
@@ -127,15 +129,15 @@
   <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
     <!-- Active Project Banner Pill -->
-    <div class="mb-4 flex items-center justify-between text-xs text-slate-400 bg-slate-900/60 border border-slate-800/80 rounded-lg px-4 py-2">
+    <div class="mb-5 flex items-center justify-between text-xs text-slate-600 bg-white border border-slate-200/90 rounded-xl px-4 py-2.5 shadow-2xs">
       <div class="flex items-center space-x-2">
-        <i class="fa-solid fa-shield-halved text-cyan-400"></i>
-        <span>Active Project Isolation Scope:</span>
-        <span id="active-project-badge" class="font-bold text-slate-200">Apache Kafka (kafka)</span>
+        <i class="fa-solid fa-shield-halved text-blue-600"></i>
+        <span class="text-slate-500">Active Project Scope:</span>
+        <span id="active-project-badge" class="font-semibold text-slate-900">Apache Kafka (kafka)</span>
       </div>
       <div class="flex items-center space-x-4">
         <span id="active-project-domain" class="text-slate-500 font-mono text-[11px]">Domain: Distributed Streaming</span>
-        <button onclick="refreshActiveTab()" class="text-cyan-400 hover:text-cyan-300 transition">
+        <button onclick="refreshActiveTab()" class="text-blue-600 hover:text-blue-700 font-medium transition">
           <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Tab
         </button>
       </div>
@@ -144,66 +146,66 @@
     <!-- ==================== TAB 1: OVERVIEW ==================== -->
     <section id="view-overview" class="space-y-6">
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <span class="text-xs font-medium text-slate-400">Temporal Events</span>
-            <span class="p-2 bg-emerald-950/60 rounded-lg text-emerald-400"><i class="fa-solid fa-calendar-check text-sm"></i></span>
+            <span class="text-xs font-medium text-slate-500">Temporal Events</span>
+            <span class="p-2 bg-emerald-50 border border-emerald-100 rounded-lg text-emerald-400"><i class="fa-solid fa-calendar-check text-sm"></i></span>
           </div>
-          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-temporal-events">-</div>
+          <div class="mt-2 text-2xl font-bold text-slate-900 tracking-tight" id="stat-temporal-events">-</div>
           <div class="mt-1 text-xs text-emerald-400 flex items-center"><i class="fa-solid fa-check mr-1"></i> 100% Evidence Grounded</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <span class="text-xs font-medium text-slate-400">Canonical Features</span>
-            <span class="p-2 bg-purple-950/60 rounded-lg text-purple-400"><i class="fa-solid fa-shapes text-sm"></i></span>
+            <span class="text-xs font-medium text-slate-500">Canonical Features</span>
+            <span class="p-2 bg-purple-50 border border-purple-100 rounded-lg text-purple-400"><i class="fa-solid fa-shapes text-sm"></i></span>
           </div>
-          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-canonical-features">-</div>
+          <div class="mt-2 text-2xl font-bold text-slate-900 tracking-tight" id="stat-canonical-features">-</div>
           <div class="mt-1 text-xs text-purple-400" id="stat-feature-aliases">Resolved with Aliases & KIPs</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <span class="text-xs font-medium text-slate-400">Verifiable Citations</span>
-            <span class="p-2 bg-rose-950/60 rounded-lg text-rose-400"><i class="fa-solid fa-receipt text-sm"></i></span>
+            <span class="text-xs font-medium text-slate-500">Verifiable Citations</span>
+            <span class="p-2 bg-rose-50 border border-rose-100 rounded-lg text-rose-400"><i class="fa-solid fa-receipt text-sm"></i></span>
           </div>
-          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-evidence-links">-</div>
-          <div class="mt-1 text-xs text-slate-400">SHA-256 Hashes & Records</div>
+          <div class="mt-2 text-2xl font-bold text-slate-900 tracking-tight" id="stat-evidence-links">-</div>
+          <div class="mt-1 text-xs text-slate-500">SHA-256 Hashes & Records</div>
         </div>
 
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 shadow-sm">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
           <div class="flex justify-between items-start">
-            <span class="text-xs font-medium text-slate-400">Graph Elements</span>
-            <span class="p-2 bg-blue-950/60 rounded-lg text-blue-400"><i class="fa-solid fa-network-wired text-sm"></i></span>
+            <span class="text-xs font-medium text-slate-500">Graph Elements</span>
+            <span class="p-2 bg-blue-50 border border-blue-100 rounded-lg text-blue-400"><i class="fa-solid fa-network-wired text-sm"></i></span>
           </div>
-          <div class="mt-2 text-2xl font-bold text-white tracking-tight" id="stat-graph-elements">-</div>
-          <div class="mt-1 text-xs text-slate-400">Multi-Hop Traversal Engine</div>
+          <div class="mt-2 text-2xl font-bold text-slate-900 tracking-tight" id="stat-graph-elements">-</div>
+          <div class="mt-1 text-xs text-slate-500">Multi-Hop Traversal Engine</div>
         </div>
       </div>
 
       <!-- Quick Actions Banner -->
-      <div class="bg-gradient-to-r from-slate-900 via-slate-800 to-indigo-950 border border-slate-800 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4">
+      <div class="bg-gradient-to-r from-blue-50/70 via-indigo-50/50 to-slate-50 border border-blue-100 rounded-xl p-6 flex flex-col md:flex-row justify-between items-center gap-4 shadow-2xs">
         <div>
-          <h2 class="text-base font-bold text-white flex items-center">
-            <i class="fa-solid fa-wand-magic-sparkles text-cyan-400 mr-2"></i>
+          <h2 class="text-base font-semibold text-slate-900 flex items-center">
+            <i class="fa-solid fa-wand-magic-sparkles text-blue-600 mr-2"></i>
             Historical AI Question Answering & Knowledge Graph
           </h2>
-          <p class="text-xs text-slate-400 mt-1">Ask questions about architectural decisions, feature lifecycles, and contributor attribution with zero hallucination.</p>
+          <p class="text-xs text-slate-600 mt-1">Ask questions about architectural decisions, feature lifecycles, and contributor attribution with zero hallucination.</p>
         </div>
         <div class="flex gap-2">
-          <button onclick="switchTab('qa')" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow transition">
+          <button onclick="switchTab('qa')" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium shadow-sm transition">
             <i class="fa-solid fa-brain mr-1.5"></i> Ask a Question
           </button>
-          <button onclick="switchTab('graph')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded-lg text-xs font-semibold transition">
+          <button onclick="switchTab('graph')" class="px-4 py-2 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium shadow-2xs transition">
             <i class="fa-solid fa-diagram-project mr-1.5"></i> Explore Graph
           </button>
         </div>
       </div>
 
       <!-- Taxonomy Grid -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4">
-        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
-          <i class="fa-solid fa-tag text-cyan-400 mr-2"></i> Temporal Event Taxonomy Distribution
+      <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4">
+        <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+          <i class="fa-solid fa-tag text-blue-600 mr-2"></i> Temporal Event Taxonomy Distribution
         </h3>
         <div class="grid grid-cols-2 sm:grid-cols-5 gap-3" id="taxonomy-distribution-grid">
           <!-- Dynamically populated -->
@@ -215,13 +217,13 @@
     <section id="view-sources" class="hidden space-y-6">
       <div class="flex justify-between items-center">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center">
-            <i class="fa-solid fa-cloud-arrow-up text-cyan-400 mr-2"></i> Multi-Source Project Onboarding
+          <h2 class="text-lg font-bold text-slate-900 flex items-center">
+            <i class="fa-solid fa-cloud-arrow-up text-blue-600 mr-2"></i> Multi-Source Project Onboarding
           </h2>
-          <p class="text-xs text-slate-400">Connect Jira Cloud instances, public GitHub repositories, and architectural documents into the active project.</p>
+          <p class="text-xs text-slate-500">Connect Jira Cloud instances, public GitHub repositories, and architectural documents into the active project.</p>
         </div>
         <div class="flex items-center space-x-2">
-          <button onclick="loadIngestionRuns(); loadProjectDocuments();" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-cyan-400 border border-slate-700 text-xs font-medium transition">
+          <button onclick="loadIngestionRuns(); loadProjectDocuments();" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-100 text-blue-600 border border-slate-200 text-xs font-medium transition">
             <i class="fa-solid fa-rotate mr-1"></i> Refresh Runs & Documents
           </button>
         </div>
@@ -230,7 +232,7 @@
       <!-- Sources Connect Grid (3 Cards) -->
       <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         <!-- 1. Jira Cloud Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2.5">
@@ -238,42 +240,42 @@
                   <i class="fa-brands fa-jira text-base"></i>
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-white">Jira Cloud</h3>
-                  <p class="text-[11px] text-slate-400">REST API v3, ADF & Changelogs</p>
+                  <h3 class="text-sm font-bold text-slate-900">Jira Cloud</h3>
+                  <p class="text-[11px] text-slate-500">REST API v3, ADF & Changelogs</p>
                 </div>
               </div>
-              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-blue-950 text-blue-400 border border-blue-800">Read-Only</span>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium">Read-Only</span>
             </div>
 
             <div class="space-y-2 pt-1 text-xs">
               <div>
-                <label class="text-slate-400 block mb-1">Base URL</label>
-                <input type="text" id="jira-base-url" placeholder="https://example.atlassian.net" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+                <label class="text-slate-500 block mb-1">Base URL</label>
+                <input type="text" id="jira-base-url" value="https://demo.atlassian.net" placeholder="https://demo.atlassian.net" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
               </div>
               <div>
-                <label class="text-slate-400 block mb-1">Account Email</label>
-                <input type="email" id="jira-email" placeholder="dev@company.com" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+                <label class="text-slate-500 block mb-1">Account Email</label>
+                <input type="email" id="jira-email" value="developer@example.com" placeholder="dev@company.com" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
               </div>
               <div>
-                <label class="text-slate-400 block mb-1">API Token</label>
-                <input type="password" id="jira-api-token" placeholder="ATATT3xFfGF0..." class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+                <label class="text-slate-500 block mb-1">API Token</label>
+                <input type="password" id="jira-api-token" value="demo-token-12345" placeholder="ATATT3xFfGF0..." class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
               </div>
               <div id="jira-status-msg" class="text-[11px] min-h-[1.25rem]"></div>
             </div>
           </div>
 
-          <div class="flex gap-2 pt-2 border-t border-slate-800">
-            <button onclick="testJiraConnection()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded text-xs font-medium transition">
+          <div class="flex gap-2 pt-2 border-t border-slate-200">
+            <button id="jira-test-btn" onclick="testJiraConnection()" class="flex-1 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-medium transition shadow-2xs">
               <i class="fa-solid fa-stethoscope mr-1"></i> Test
             </button>
-            <button onclick="saveAndSyncJira()" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold transition">
+            <button id="jira-sync-btn" onclick="saveAndSyncJira()" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded text-xs font-semibold transition">
               <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Connect & Sync
             </button>
           </div>
         </div>
 
         <!-- 2. GitHub Public Repo Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2.5">
@@ -281,39 +283,39 @@
                   <i class="fa-brands fa-github text-base"></i>
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-white">GitHub Public</h3>
-                  <p class="text-[11px] text-slate-400">Commits, File Diffs & PRs</p>
+                  <h3 class="text-sm font-bold text-slate-900">GitHub Public</h3>
+                  <p class="text-[11px] text-slate-500">Commits, File Diffs & PRs</p>
                 </div>
               </div>
-              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Public/Token</span>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-medium">Public/Token</span>
             </div>
 
             <div class="space-y-2 pt-1 text-xs">
               <div>
-                <label class="text-slate-400 block mb-1">Repository URL or Slug</label>
-                <input type="text" id="github-repo-url" placeholder="https://github.com/apache/kafka" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+                <label class="text-slate-500 block mb-1">Repository URL or Slug</label>
+                <input type="text" id="github-repo-url" value="https://github.com/apache/kafka" placeholder="https://github.com/apache/kafka" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
               </div>
               <div>
-                <label class="text-slate-400 block mb-1">Personal Access Token (Optional)</label>
-                <input type="password" id="github-token" placeholder="ghp_xxxx (recommended for rate limits)" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+                <label class="text-slate-500 block mb-1">Personal Access Token (Optional)</label>
+                <input type="password" id="github-token" placeholder="ghp_xxxx (recommended for rate limits)" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
               </div>
               <p class="text-[11px] text-slate-500">Unauthenticated limit is 60 req/hr. Tokens raise it to 5,000 req/hr.</p>
               <div id="github-status-msg" class="text-[11px] min-h-[1.25rem]"></div>
             </div>
           </div>
 
-          <div class="flex gap-2 pt-2 border-t border-slate-800">
-            <button onclick="testGithubConnection()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 rounded text-xs font-medium transition">
+          <div class="flex gap-2 pt-2 border-t border-slate-200">
+            <button id="github-test-btn" onclick="testGithubConnection()" class="flex-1 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-medium transition shadow-2xs">
               <i class="fa-solid fa-stethoscope mr-1"></i> Validate
             </button>
-            <button onclick="saveAndSyncGithub()" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold transition">
+            <button id="github-sync-btn" onclick="saveAndSyncGithub()" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded text-xs font-semibold transition">
               <i class="fa-solid fa-cloud-arrow-down mr-1"></i> Connect & Sync
             </button>
           </div>
         </div>
 
         <!-- 3. Document Ingestion Card -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4 shadow-sm flex flex-col justify-between">
           <div class="space-y-3">
             <div class="flex items-center justify-between">
               <div class="flex items-center space-x-2.5">
@@ -321,36 +323,36 @@
                   <i class="fa-solid fa-file-lines text-base"></i>
                 </div>
                 <div>
-                  <h3 class="text-sm font-bold text-white">Documents</h3>
-                  <p class="text-[11px] text-slate-400">PDF, DOCX, Markdown, TXT & URLs</p>
+                  <h3 class="text-sm font-bold text-slate-900">Documents</h3>
+                  <p class="text-[11px] text-slate-500">PDF, DOCX, Markdown, TXT & URLs</p>
                 </div>
               </div>
-              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded bg-purple-950 text-purple-400 border border-purple-800">SSRF Guard</span>
+              <span class="text-[10px] uppercase font-mono px-2 py-0.5 rounded-full bg-purple-50 text-purple-700 border border-purple-200 font-medium">SSRF Guard</span>
             </div>
 
             <div class="space-y-2 pt-1 text-xs">
               <div>
-                <label class="text-slate-400 block mb-1">Direct File Upload</label>
-                <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.md" class="w-full px-2 py-1 bg-slate-800 border border-slate-700 rounded text-slate-300 text-xs">
+                <label class="text-slate-500 block mb-1">Direct File Upload</label>
+                <input type="file" id="doc-file-input" accept=".pdf,.docx,.txt,.md" class="w-full px-2 py-1 bg-white border border-slate-300 rounded-lg text-slate-700 text-xs shadow-2xs">
               </div>
               <div class="relative flex py-1 items-center">
-                <div class="flex-grow border-t border-slate-800"></div>
+                <div class="flex-grow border-t border-slate-200"></div>
                 <span class="flex-shrink mx-2 text-[10px] text-slate-500 uppercase">OR Public URL</span>
-                <div class="flex-grow border-t border-slate-800"></div>
+                <div class="flex-grow border-t border-slate-200"></div>
               </div>
               <div>
-                <label class="text-slate-400 block mb-1">Document Public URL</label>
-                <input type="url" id="doc-url-input" placeholder="https://raw.githubusercontent.com/.../spec.md" class="w-full px-3 py-1.5 bg-slate-800 border border-slate-700 rounded text-slate-200 text-xs focus:outline-none focus:border-cyan-500">
+                <label class="text-slate-500 block mb-1">Document Public URL</label>
+                <input type="url" id="doc-url-input" value="https://raw.githubusercontent.com/apache/kafka/trunk/README.md" placeholder="https://raw.githubusercontent.com/.../spec.md" class="w-full px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
               </div>
               <div id="doc-status-msg" class="text-[11px] min-h-[1.25rem]"></div>
             </div>
           </div>
 
-          <div class="flex gap-2 pt-2 border-t border-slate-800">
-            <button onclick="uploadDocumentFile()" class="flex-1 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold transition">
+          <div class="flex gap-2 pt-2 border-t border-slate-200">
+            <button id="doc-upload-btn" onclick="uploadDocumentFile()" class="flex-1 py-1.5 bg-purple-600 hover:bg-purple-500 text-white rounded text-xs font-semibold transition">
               <i class="fa-solid fa-upload mr-1"></i> Upload File
             </button>
-            <button onclick="ingestDocumentFromUrl()" class="flex-1 py-1.5 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-purple-300 rounded text-xs font-medium transition">
+            <button id="doc-url-btn" onclick="ingestDocumentFromUrl()" class="flex-1 py-1.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 rounded-lg text-xs font-medium transition shadow-2xs">
               <i class="fa-solid fa-link mr-1"></i> Ingest URL
             </button>
           </div>
@@ -358,18 +360,18 @@
       </div>
 
       <!-- Ingestion Runs Monitor Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center">
           <div>
             <h3 class="font-bold text-sm text-white flex items-center">
-              <i class="fa-solid fa-server text-cyan-400 mr-2"></i> Ingestion Execution & Sync Monitor
+              <i class="fa-solid fa-server text-blue-600 mr-2"></i> Ingestion Execution & Sync Monitor
             </h3>
-            <p class="text-[11px] text-slate-400">Tracking execution status, throughput, and sync checkpoints for the active project.</p>
+            <p class="text-[11px] text-slate-500">Tracking execution status, throughput, and sync checkpoints for the active project.</p>
           </div>
-          <span class="text-xs text-slate-400 font-mono" id="ingestion-active-project-tag">Project: Apache Kafka</span>
+          <span class="text-xs text-slate-500 font-mono" id="ingestion-active-project-tag">Project: Apache Kafka</span>
         </div>
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
             <tr>
               <th class="px-4 py-3">Run ID</th>
               <th class="px-4 py-3">Source System</th>
@@ -381,27 +383,27 @@
               <th class="px-4 py-3">Checkpoint / Error</th>
             </tr>
           </thead>
-          <tbody id="ingestion-runs-tbody" class="divide-y divide-slate-800/60 font-mono">
+          <tbody id="ingestion-runs-tbody" class="divide-y divide-slate-200/60 font-mono">
             <tr><td colspan="8" class="px-4 py-6 text-center text-slate-500">Loading project ingestion runs...</td></tr>
           </tbody>
         </table>
       </div>
 
       <!-- Document Inventory Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-slate-800 flex justify-between items-center">
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-200 flex justify-between items-center">
           <div>
             <h3 class="font-bold text-sm text-white flex items-center">
               <i class="fa-solid fa-folder-open text-purple-400 mr-2"></i> Ingested Project Documents & Specifications
             </h3>
-            <p class="text-[11px] text-slate-400">Uploaded architectural specifications, KIPs, whitepapers, and documents parsed into domain records.</p>
+            <p class="text-[11px] text-slate-500">Uploaded architectural specifications, KIPs, whitepapers, and documents parsed into domain records.</p>
           </div>
           <button onclick="loadProjectDocuments()" class="text-xs text-purple-400 hover:text-purple-300 font-medium">
             <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Documents
           </button>
         </div>
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
             <tr>
               <th class="px-4 py-3">Doc ID</th>
               <th class="px-4 py-3">Filename</th>
@@ -413,7 +415,7 @@
               <th class="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody id="documents-tbody" class="divide-y divide-slate-800/60 font-mono">
+          <tbody id="documents-tbody" class="divide-y divide-slate-200/60 font-mono">
             <tr><td colspan="8" class="px-4 py-6 text-center text-slate-500">Loading project documents...</td></tr>
           </tbody>
         </table>
@@ -424,33 +426,33 @@
     <section id="view-features" class="hidden space-y-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center">
+          <h2 class="text-lg font-bold text-slate-900 flex items-center">
             <i class="fa-solid fa-shapes text-purple-400 mr-2"></i> Canonical Feature Identities
           </h2>
-          <p class="text-xs text-slate-400">Layered entity resolution connecting code commits, Jira issues, and KIPs to stable product features.</p>
+          <p class="text-xs text-slate-500">Layered entity resolution connecting code commits, Jira issues, and KIPs to stable product features.</p>
         </div>
         <div class="flex items-center space-x-2">
-          <button onclick="seedFeatures()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-purple-400 border border-slate-700 text-xs font-medium transition">
+          <button onclick="seedFeatures()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-100 text-purple-400 border border-slate-200 text-xs font-medium transition">
             <i class="fa-solid fa-seedling mr-1"></i> Re-Index Links
           </button>
         </div>
       </div>
 
       <!-- Feature Resolution Identity Resolver Tool -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 space-y-3">
+      <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-3">
         <div class="flex justify-between items-center">
-          <span class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+          <span class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
             <i class="fa-solid fa-crosshairs text-purple-400 mr-2"></i> Feature Identity & Term Resolver (Work 04)
           </span>
           <span class="text-[11px] text-slate-500">Resolves abbreviations, KIPs, code classes to canonical identities</span>
         </div>
         <form onsubmit="resolveFeatureTerm(event)" class="flex gap-2">
-          <input type="text" id="feature-resolve-input" placeholder="Enter feature query, alias or KIP (e.g., 'KIP-500', 'KRaft', 'LogCleaner', 'Streams')..." class="flex-1 px-3 py-2 bg-slate-950 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-purple-500">
+          <input type="text" id="feature-resolve-input" placeholder="Enter feature query, alias or KIP (e.g., 'KIP-500', 'KRaft', 'LogCleaner', 'Streams')..." class="flex-1 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-purple-500">
           <button type="submit" id="btn-resolve-feature" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold transition flex items-center">
             <i class="fa-solid fa-magnifying-glass mr-1.5"></i> Resolve Identity
           </button>
         </form>
-        <div id="feature-resolve-results" class="hidden pt-2 border-t border-slate-800/80">
+        <div id="feature-resolve-results" class="hidden pt-2 border-t border-slate-200/80">
           <!-- Resolved Candidate Cards -->
         </div>
       </div>
@@ -459,9 +461,9 @@
       <div class="flex gap-3">
         <div class="relative flex-1">
           <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-500 text-xs"></i>
-          <input type="text" id="feature-search" oninput="filterFeatures()" placeholder="Filter features in active project by name, description, alias..." class="w-full pl-9 pr-3 py-2 bg-slate-900 border border-slate-800 rounded-lg text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+          <input type="text" id="feature-search" oninput="filterFeatures()" placeholder="Filter features in active project by name, description, alias..." class="w-full pl-9 pr-3 py-2 bg-white border border-slate-200 rounded-lg text-xs text-slate-800 focus:outline-none focus:border-cyan-500">
         </div>
-        <select id="feature-category-filter" onchange="filterFeatures()" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-300">
+        <select id="feature-category-filter" onchange="filterFeatures()" class="bg-white border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-700">
           <option value="">All Categories</option>
           <option value="CORE">CORE</option>
           <option value="CLIENT">CLIENT</option>
@@ -483,38 +485,38 @@
     <section id="view-graph" class="hidden space-y-6">
       <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center">
+          <h2 class="text-lg font-bold text-slate-900 flex items-center">
             <i class="fa-solid fa-diagram-project text-blue-400 mr-2"></i> Temporal Knowledge Graph (Work 05)
           </h2>
-          <p class="text-xs text-slate-400">Multi-hop graph traversal across Features, Issues, Commits, Temporal Events, and Evidence.</p>
+          <p class="text-xs text-slate-500">Multi-hop graph traversal across Features, Issues, Commits, Temporal Events, and Evidence.</p>
         </div>
         <div class="flex flex-wrap items-center gap-2 text-xs">
           <!-- Seed Type Selector -->
-          <select id="graph-seed-type" onchange="onGraphSeedTypeChange(this.value)" class="bg-slate-900 border border-slate-800 rounded-lg px-2.5 py-1.5 text-slate-200 font-semibold text-cyan-400">
+          <select id="graph-seed-type" onchange="onGraphSeedTypeChange(this.value)" class="bg-white border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-800 font-semibold text-blue-600">
             <option value="FEATURE">Seed: FEATURE</option>
             <option value="ISSUE">Seed: ISSUE</option>
             <option value="COMMIT">Seed: COMMIT</option>
           </select>
           <!-- Feature Dropdown Seed -->
-          <select id="graph-root-feature" class="bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 max-w-[200px]">
+          <select id="graph-root-feature" class="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-800 max-w-[200px]">
             <!-- Dynamically populated -->
           </select>
           <!-- Issue/Commit Input Seed with Datalist Suggestions -->
           <div class="relative flex items-center gap-1.5">
-            <input type="text" id="graph-root-custom" list="graph-seed-suggestions" placeholder="e.g. KAFKA-10" class="hidden bg-slate-900 border border-slate-800 rounded-lg px-3 py-1.5 text-slate-200 text-xs w-44 focus:border-cyan-500 focus:outline-none">
+            <input type="text" id="graph-root-custom" list="graph-seed-suggestions" placeholder="e.g. KAFKA-10" class="hidden bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-800 text-xs w-44 focus:border-cyan-500 focus:outline-none">
             <datalist id="graph-seed-suggestions"></datalist>
           </div>
           <!-- Quick clickable sample chips -->
-          <div id="graph-quick-samples" class="hidden flex items-center gap-1 text-[11px] text-slate-400">
+          <div id="graph-quick-samples" class="hidden flex items-center gap-1 text-[11px] text-slate-500">
             <span>Try:</span>
             <div id="graph-sample-chips" class="flex items-center gap-1"></div>
           </div>
-          <select id="graph-depth" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-200">
+          <select id="graph-depth" class="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-800">
             <option value="1">Depth 1</option>
             <option value="2" selected>Depth 2</option>
             <option value="3">Depth 3</option>
           </select>
-          <select id="graph-max-nodes" class="bg-slate-900 border border-slate-800 rounded-lg px-2 py-1.5 text-slate-200">
+          <select id="graph-max-nodes" class="bg-white border border-slate-200 rounded-lg px-2 py-1.5 text-slate-800">
             <option value="25">25 Nodes</option>
             <option value="50" selected>50 Nodes</option>
             <option value="100">100 Nodes</option>
@@ -523,7 +525,7 @@
           <button onclick="renderSelectedGraph()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-semibold transition">
             <i class="fa-solid fa-play mr-1"></i> Render Subgraph
           </button>
-          <button onclick="resetGraphView()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg transition" title="Reset View">
+          <button onclick="resetGraphView()" class="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg transition" title="Reset View">
             <i class="fa-solid fa-arrows-rotate"></i>
           </button>
         </div>
@@ -532,9 +534,9 @@
       <!-- Graph Visualization Container -->
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- SVG Canvas -->
-        <div class="lg:col-span-2 bg-slate-900 border border-slate-800 rounded-xl p-4 min-h-[520px] flex flex-col relative overflow-hidden">
+        <div class="lg:col-span-2 bg-white border border-slate-200 rounded-xl p-4 min-h-[520px] flex flex-col relative overflow-hidden">
           <div class="flex justify-between items-center mb-3">
-            <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-400 font-mono">
+            <div class="flex flex-wrap items-center gap-2 text-[11px] text-slate-500 font-mono">
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-purple-500 mr-1"></span> FEATURE</span>
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-indigo-500 mr-1"></span> ALIAS</span>
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-blue-500 mr-1"></span> ISSUE</span>
@@ -543,9 +545,9 @@
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-cyan-500 mr-1"></span> CONTRIBUTOR</span>
               <span class="inline-flex items-center"><span class="w-2.5 h-2.5 rounded-full bg-rose-500 mr-1"></span> EVIDENCE</span>
             </div>
-            <div id="graph-meta-counts" class="text-xs text-slate-400 font-mono">0 nodes, 0 edges</div>
+            <div id="graph-meta-counts" class="text-xs text-slate-500 font-mono">0 nodes, 0 edges</div>
           </div>
-          <div id="graph-canvas-container" class="flex-1 w-full h-full flex items-center justify-center relative bg-slate-950/60 rounded-lg border border-slate-800/60">
+          <div id="graph-canvas-container" class="flex-1 w-full h-full flex items-center justify-center relative bg-slate-50/60 rounded-lg border border-slate-200/60">
             <svg id="graph-svg" class="w-full h-[450px]">
               <defs>
                 <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
@@ -560,23 +562,23 @@
         </div>
 
         <!-- Node Inspector Panel -->
-        <div class="bg-slate-900 border border-slate-800 rounded-xl p-5 space-y-4 flex flex-col justify-between">
+        <div class="bg-white border border-slate-200 rounded-xl p-5 space-y-4 flex flex-col justify-between">
           <div>
             <div class="flex justify-between items-center mb-3">
-              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
-                <i class="fa-solid fa-circle-info text-cyan-400 mr-2"></i> Node Inspector
+              <h3 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
+                <i class="fa-solid fa-circle-info text-blue-600 mr-2"></i> Node Inspector
               </h3>
               <span id="inspector-node-status" class="text-[10px] font-mono text-slate-500">No selection</span>
             </div>
-            <div id="node-inspector-content" class="text-xs text-slate-400 space-y-3">
+            <div id="node-inspector-content" class="text-xs text-slate-500 space-y-3">
               <p class="italic text-slate-500">Click on any node in the graph to inspect its properties, connected edges, and historical provenance.</p>
             </div>
           </div>
-          <div id="inspector-actions" class="hidden pt-3 border-t border-slate-800 space-y-2">
+          <div id="inspector-actions" class="hidden pt-3 border-t border-slate-200 space-y-2">
             <button id="btn-expand-node" onclick="expandSelectedNode()" class="w-full py-2 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold transition flex items-center justify-center shadow">
               <i class="fa-solid fa-diagram-next mr-1.5"></i> Expand Node Connections
             </button>
-            <button id="btn-inspect-subdetail" onclick="inspectSelectedNodeInDomain()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 rounded-lg text-xs transition">
+            <button id="btn-inspect-subdetail" onclick="inspectSelectedNodeInDomain()" class="w-full py-1.5 bg-slate-800 hover:bg-slate-100 text-slate-700 border border-slate-200 rounded-lg text-xs transition">
               <i class="fa-solid fa-arrow-up-right-from-square mr-1.5"></i> Open Full Record Details
             </button>
           </div>
@@ -588,13 +590,13 @@
     <section id="view-qa" class="hidden space-y-6">
       <div class="flex justify-between items-start">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center">
-            <i class="fa-solid fa-brain text-cyan-400 mr-2"></i> Historical AI Question Answering (Work 06)
+          <h2 class="text-lg font-bold text-slate-900 flex items-center">
+            <i class="fa-solid fa-brain text-blue-600 mr-2"></i> Historical AI Question Answering (Work 06)
           </h2>
-          <p class="text-xs text-slate-400">Evidence-grounded natural-language answers backed by verified project events and SHA-256 verbatim excerpts.</p>
+          <p class="text-xs text-slate-500">Evidence-grounded natural-language answers backed by verified project events and SHA-256 verbatim excerpts.</p>
         </div>
         <div class="text-right">
-          <span class="px-2.5 py-1 rounded bg-slate-800 border border-slate-700 text-xs text-cyan-300 font-mono font-semibold" id="qa-active-project-tag">Scope: kafka</span>
+          <span class="px-2.5 py-1 rounded bg-slate-100 border border-slate-200 text-xs text-slate-700 font-mono font-medium" id="qa-active-project-tag">Scope: kafka</span>
         </div>
       </div>
 
@@ -607,31 +609,31 @@
       </div>
 
       <!-- Question Input Form -->
-      <form onsubmit="askHistoricalQuestion(event)" class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex gap-3 shadow-sm">
-        <input type="text" id="qa-input" placeholder="Ask an architectural question (e.g., 'Why was ZooKeeper replaced by KRaft?', 'Who implemented Log Compaction?')..." class="flex-1 bg-slate-950 border border-slate-800 rounded-lg px-4 py-2.5 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
-        <button type="submit" id="qa-submit-btn" class="px-5 py-2.5 bg-gradient-to-r from-cyan-600 to-indigo-600 hover:from-cyan-500 hover:to-indigo-500 text-white rounded-lg text-xs font-semibold shadow transition flex items-center">
+      <form onsubmit="askHistoricalQuestion(event)" class="bg-white border border-slate-200 rounded-xl p-4 flex gap-3 shadow-sm">
+        <input type="text" id="qa-input" placeholder="Ask an architectural question (e.g., 'Why was ZooKeeper replaced by KRaft?', 'Who implemented Log Compaction?')..." class="flex-1 bg-white border border-slate-300 rounded-lg px-4 py-2.5 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs">
+        <button type="submit" id="qa-submit-btn" class="px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium shadow-sm transition flex items-center">
           <i class="fa-solid fa-paper-plane mr-2"></i> Ask Engine
         </button>
       </form>
 
       <!-- QA Answer Card -->
-      <div id="qa-result-container" class="hidden bg-slate-900 border border-slate-800 rounded-xl p-6 space-y-5 shadow-lg">
-        <div class="flex justify-between items-center pb-3 border-b border-slate-800">
+      <div id="qa-result-container" class="hidden bg-white border border-slate-200 rounded-xl p-6 space-y-5 shadow-lg">
+        <div class="flex justify-between items-center pb-3 border-b border-slate-200">
           <div class="flex items-center space-x-2">
             <span id="qa-feature-badge" class="px-2.5 py-1 rounded bg-purple-950/80 text-purple-300 border border-purple-800 text-xs font-semibold">Canonical Feature</span>
             <span id="qa-mode-badge" class="px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 text-[11px] font-mono">DETERMINISTIC_GROUNDED</span>
           </div>
-          <span id="qa-confidence-badge" class="text-xs font-mono text-cyan-400">Confidence: 100%</span>
+          <span id="qa-confidence-badge" class="text-xs font-mono text-blue-600">Confidence: 100%</span>
         </div>
 
         <!-- Synthesized Answer Text -->
-        <div id="qa-answer-markdown" class="prose prose-invert max-w-none text-xs text-slate-200 leading-relaxed space-y-3">
+        <div id="qa-answer-markdown" class="prose prose-slate max-w-none text-xs text-slate-800 leading-relaxed space-y-3">
           <!-- Rendered Markdown -->
         </div>
 
         <!-- Milestone Timeline Ribbon -->
-        <div id="qa-timeline-section" class="pt-4 border-t border-slate-800 space-y-3">
-          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+        <div id="qa-timeline-section" class="pt-4 border-t border-slate-200 space-y-3">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
             <i class="fa-solid fa-timeline text-indigo-400 mr-2"></i> Chronological Timeline Milestones
           </h4>
           <div class="space-y-2" id="qa-timeline-events">
@@ -640,8 +642,8 @@
         </div>
 
         <!-- Verifiable Evidence Citations -->
-        <div id="qa-citations-section" class="pt-4 border-t border-slate-800 space-y-3">
-          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center">
+        <div id="qa-citations-section" class="pt-4 border-t border-slate-200 space-y-3">
+          <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center">
             <i class="fa-solid fa-receipt text-rose-400 mr-2"></i> Grounded Citations & SHA-256 Evidence
           </h4>
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3" id="qa-citations-grid">
@@ -655,41 +657,48 @@
     <section id="view-explorer" class="hidden space-y-6">
       <div class="flex justify-between items-center">
         <div>
-          <h2 class="text-lg font-bold text-white flex items-center">
+          <h2 class="text-lg font-bold text-slate-900 flex items-center">
             <i class="fa-solid fa-list-check text-emerald-400 mr-2"></i> Verified Temporal Events (Work 03)
           </h2>
-          <p class="text-xs text-slate-400">Extracted domain events with actor attribution, chronological ordering, and verbatim evidence excerpts.</p>
+          <p class="text-xs text-slate-500">Extracted domain events with actor attribution, chronological ordering, and verbatim evidence excerpts.</p>
         </div>
-        <div class="text-xs text-slate-400">
-          Showing <span id="events-count" class="font-bold text-slate-200">0</span> events on this page
+        <div class="text-xs text-slate-500">
+          Showing <span id="events-count" class="font-bold text-slate-800">0</span> events on this page
         </div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-4 flex flex-wrap gap-3 items-center">
-        <select id="filter-event-type" onchange="fetchEvents(0)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
-          <option value="">All Event Types</option>
-          <option value="ISSUE_CREATED">ISSUE_CREATED</option>
-          <option value="ISSUE_RESOLVED">ISSUE_RESOLVED</option>
-          <option value="FEATURE_PROPOSED">FEATURE_PROPOSED</option>
-          <option value="DECISION_APPROVED">DECISION_APPROVED</option>
-          <option value="FEATURE_IMPLEMENTED">FEATURE_IMPLEMENTED</option>
-          <option value="FEATURE_MODIFIED">FEATURE_MODIFIED</option>
-          <option value="FEATURE_REMOVED">FEATURE_REMOVED</option>
-          <option value="BUG_REPORTED">BUG_REPORTED</option>
-          <option value="CONCERN_RAISED">CONCERN_RAISED</option>
-          <option value="DECISION_REVERSED">DECISION_REVERSED</option>
-        </select>
-        <input type="text" id="filter-issue-id" onchange="fetchEvents(0)" placeholder="Issue Key (e.g. KAFKA-100)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
-        <input type="text" id="filter-actor" onchange="fetchEvents(0)" placeholder="Actor (e.g. junrao)" class="bg-slate-950 border border-slate-800 rounded-lg px-3 py-1.5 text-xs text-slate-300">
-        <button onclick="fetchEvents(0)" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition">
-          <i class="fa-solid fa-filter mr-1"></i> Filter
-        </button>
+      <div class="bg-white border border-slate-200 rounded-xl p-4 space-y-2.5">
+        <div class="flex flex-wrap gap-3 items-center">
+          <select id="filter-event-type" onchange="fetchEvents(0)" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700">
+            <option value="">All Event Types</option>
+            <option value="ISSUE_CREATED">ISSUE_CREATED</option>
+            <option value="ISSUE_RESOLVED">ISSUE_RESOLVED</option>
+            <option value="FEATURE_PROPOSED">FEATURE_PROPOSED</option>
+            <option value="DECISION_APPROVED">DECISION_APPROVED</option>
+            <option value="FEATURE_IMPLEMENTED">FEATURE_IMPLEMENTED</option>
+            <option value="FEATURE_MODIFIED">FEATURE_MODIFIED</option>
+            <option value="FEATURE_REMOVED">FEATURE_REMOVED</option>
+            <option value="BUG_REPORTED">BUG_REPORTED</option>
+            <option value="CONCERN_RAISED">CONCERN_RAISED</option>
+            <option value="DECISION_REVERSED">DECISION_REVERSED</option>
+          </select>
+          <input type="text" id="filter-issue-id" onkeydown="if(event.key==='Enter')fetchEvents(0)" placeholder="Issue Key (e.g. KAFKA-10)" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700">
+          <input type="text" id="filter-actor" onkeydown="if(event.key==='Enter')fetchEvents(0)" placeholder="Actor (e.g. junrao)" class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700">
+          <input type="text" id="filter-search" onkeydown="if(event.key==='Enter')fetchEvents(0)" placeholder="Search keywords..." class="bg-slate-50 border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-700">
+          <button id="events-filter-btn" onclick="fetchEvents(0)" class="px-3.5 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold transition flex items-center">
+            <i class="fa-solid fa-filter mr-1.5"></i> Filter
+          </button>
+          <button id="events-reset-btn" onclick="resetEventsFilters()" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-100 text-slate-700 rounded-lg text-xs font-medium transition flex items-center">
+            <i class="fa-solid fa-rotate-left mr-1.5"></i> Reset
+          </button>
+        </div>
+        <div id="events-active-filters" class="text-[11px] text-slate-500 font-mono pt-0.5"></div>
       </div>
 
       <!-- Events Table -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
             <tr>
               <th class="px-4 py-3">Type</th>
               <th class="px-4 py-3">Timestamp</th>
@@ -699,7 +708,7 @@
               <th class="px-4 py-3 text-right">Actions</th>
             </tr>
           </thead>
-          <tbody id="events-tbody" class="divide-y divide-slate-800/60 font-mono">
+          <tbody id="events-tbody" class="divide-y divide-slate-200/60 font-mono">
             <tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">Loading events...</td></tr>
           </tbody>
         </table>
@@ -707,9 +716,9 @@
 
       <!-- Pagination -->
       <div class="flex justify-between items-center text-xs">
-        <button id="btn-prev-events" onclick="fetchEvents(currentEventsPage - 1)" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-40">Previous</button>
-        <span id="events-page-indicator" class="text-slate-400 font-mono">Page 1</span>
-        <button id="btn-next-events" onclick="fetchEvents(currentEventsPage + 1)" class="px-3 py-1.5 bg-slate-900 border border-slate-800 rounded-lg text-slate-300 hover:bg-slate-800 disabled:opacity-40">Next</button>
+        <button id="btn-prev-events" onclick="fetchEvents(currentEventsPage - 1)" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-800 disabled:opacity-40">Previous</button>
+        <span id="events-page-indicator" class="text-slate-500 font-mono">Page 1</span>
+        <button id="btn-next-events" onclick="fetchEvents(currentEventsPage + 1)" class="px-3 py-1.5 bg-white border border-slate-200 rounded-lg text-slate-700 hover:bg-slate-800 disabled:opacity-40">Next</button>
       </div>
     </section>
 
@@ -717,7 +726,7 @@
     <section id="view-timeline" class="hidden space-y-6">
       <div class="space-y-2">
         <div class="flex gap-3">
-          <input type="text" id="timeline-search-issue" onkeyup="if(event.key==='Enter') loadIssueTimeline()" list="timeline-seed-suggestions" placeholder="Enter Issue Key (e.g. KAFKA-10, KAFKA-1, KAFKA-100)..." class="flex-1 bg-slate-900 border border-slate-800 rounded-lg px-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-cyan-500">
+          <input type="text" id="timeline-search-issue" onkeyup="if(event.key==='Enter') loadIssueTimeline()" list="timeline-seed-suggestions" placeholder="Enter Issue Key (e.g. KAFKA-10, KAFKA-1, KAFKA-100)..." class="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-2 text-xs text-slate-800 focus:outline-none focus:border-cyan-500">
           <datalist id="timeline-seed-suggestions">
             <option value="KAFKA-10">
             <option value="KAFKA-1">
@@ -726,25 +735,25 @@
             <option value="KAFKA-500">
             <option value="KAFKA-6122">
           </datalist>
-          <button onclick="loadIssueTimeline()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold transition">
+          <button onclick="loadIssueTimeline()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 shadow-sm text-white rounded-lg text-xs font-semibold transition">
             <i class="fa-solid fa-timeline mr-1.5"></i> Load Timeline
           </button>
         </div>
         <!-- Quick Sample Chips -->
-        <div class="flex items-center gap-1.5 text-[11px] text-slate-400 font-mono">
+        <div class="flex items-center gap-1.5 text-[11px] text-slate-500 font-mono">
           <span>Try:</span>
-          <button type="button" onclick="loadIssueTimeline('KAFKA-10')" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-cyan-300 text-slate-300 rounded border border-slate-700 text-[10px] transition">KAFKA-10</button>
-          <button type="button" onclick="loadIssueTimeline('KAFKA-1')" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-cyan-300 text-slate-300 rounded border border-slate-700 text-[10px] transition">KAFKA-1</button>
-          <button type="button" onclick="loadIssueTimeline('KAFKA-3')" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-cyan-300 text-slate-300 rounded border border-slate-700 text-[10px] transition">KAFKA-3</button>
-          <button type="button" onclick="loadIssueTimeline('KAFKA-100')" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-cyan-300 text-slate-300 rounded border border-slate-700 text-[10px] transition">KAFKA-100</button>
-          <button type="button" onclick="loadIssueTimeline('KAFKA-500')" class="px-2 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-cyan-300 text-slate-300 rounded border border-slate-700 text-[10px] transition">KAFKA-500</button>
+          <button type="button" onclick="loadIssueTimeline('KAFKA-10')" class="px-2.5 py-0.5 bg-white hover:bg-slate-50 hover:text-blue-600 text-slate-700 rounded-md border border-slate-200 text-[10px] transition shadow-2xs font-mono">KAFKA-10</button>
+          <button type="button" onclick="loadIssueTimeline('KAFKA-1')" class="px-2.5 py-0.5 bg-white hover:bg-slate-50 hover:text-blue-600 text-slate-700 rounded-md border border-slate-200 text-[10px] transition shadow-2xs font-mono">KAFKA-1</button>
+          <button type="button" onclick="loadIssueTimeline('KAFKA-3')" class="px-2.5 py-0.5 bg-white hover:bg-slate-50 hover:text-blue-600 text-slate-700 rounded-md border border-slate-200 text-[10px] transition shadow-2xs font-mono">KAFKA-3</button>
+          <button type="button" onclick="loadIssueTimeline('KAFKA-100')" class="px-2.5 py-0.5 bg-white hover:bg-slate-50 hover:text-blue-600 text-slate-700 rounded-md border border-slate-200 text-[10px] transition shadow-2xs font-mono">KAFKA-100</button>
+          <button type="button" onclick="loadIssueTimeline('KAFKA-500')" class="px-2.5 py-0.5 bg-white hover:bg-slate-50 hover:text-blue-600 text-slate-700 rounded-md border border-slate-200 text-[10px] transition shadow-2xs font-mono">KAFKA-500</button>
         </div>
       </div>
 
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6">
-        <div class="mb-6 pb-4 border-b border-slate-800">
-          <h3 id="timeline-issue-title" class="text-base font-bold text-white">Select or search an issue</h3>
-          <p id="timeline-issue-subtitle" class="text-xs text-slate-400 mt-1">Displays chronological milestones, decisions, actors, and verbatim evidence.</p>
+      <div class="bg-white border border-slate-200 rounded-xl p-6">
+        <div class="mb-6 pb-4 border-b border-slate-200">
+          <h3 id="timeline-issue-title" class="text-base font-bold text-slate-900">Select or search an issue</h3>
+          <p id="timeline-issue-subtitle" class="text-xs text-slate-500 mt-1">Displays chronological milestones, decisions, actors, and verbatim evidence.</p>
         </div>
         <div id="issue-timeline-container" class="space-y-6 relative timeline-line pl-2">
           <p class="text-xs text-slate-500 italic">Enter an issue key above to view its temporal history.</p>
@@ -754,29 +763,29 @@
 
     <!-- ==================== TAB 8: EXTRACTION ENGINE ==================== -->
     <section id="view-extraction" class="hidden space-y-6">
-      <div class="bg-slate-900 border border-slate-800 rounded-xl p-6 shadow-sm">
-        <h3 class="text-base font-bold text-white mb-2">Run Temporal Event Extraction</h3>
-        <p class="text-xs text-slate-400 mb-4">Extract 10 domain event types across raw issues, comments, commits, and links with idempotent SHA-256 evidence validation.</p>
+      <div class="bg-white border border-slate-200 rounded-xl p-6 shadow-sm">
+        <h3 class="text-base font-bold text-slate-900 mb-2">Run Temporal Event Extraction</h3>
+        <p class="text-xs text-slate-500 mb-4">Extract 10 domain event types across raw issues, comments, commits, and links with idempotent SHA-256 evidence validation.</p>
 
         <form onsubmit="triggerExtraction(event)" class="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div>
-            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Target Project</label>
-            <input type="text" id="extract-dataset" readonly class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-400 font-mono cursor-not-allowed">
+            <label class="block text-[11px] text-slate-500 uppercase font-semibold mb-1">Target Project</label>
+            <input type="text" id="extract-dataset" readonly class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-500 font-mono cursor-not-allowed">
           </div>
           <div>
-            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Mode</label>
-            <select id="extract-mode" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
+            <label class="block text-[11px] text-slate-500 uppercase font-semibold mb-1">Mode</label>
+            <select id="extract-mode" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800">
               <option value="DETERMINISTIC_ONLY">Deterministic Extractors</option>
               <option value="HYBRID">Hybrid (Rules + LLM)</option>
               <option value="LLM_ONLY">LLM Only</option>
             </select>
           </div>
           <div>
-            <label class="block text-[11px] text-slate-400 uppercase font-semibold mb-1">Max Issues</label>
-            <input type="number" id="extract-limit" value="500" class="w-full bg-slate-950 border border-slate-800 rounded-lg px-3 py-2 text-xs text-slate-200">
+            <label class="block text-[11px] text-slate-500 uppercase font-semibold mb-1">Max Issues</label>
+            <input type="number" id="extract-limit" value="500" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs text-slate-800">
           </div>
           <div class="flex items-end">
-            <button type="submit" id="btn-run-extract" class="w-full py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded-lg text-xs font-semibold shadow transition">
+            <button type="submit" id="btn-run-extract" class="w-full py-2 bg-blue-600 hover:bg-blue-700 shadow-sm text-white rounded-lg text-xs font-semibold shadow transition">
               <i class="fa-solid fa-bolt mr-2"></i> Run Extraction
             </button>
           </div>
@@ -784,15 +793,15 @@
       </div>
 
       <!-- Extraction Run History -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-slate-800 font-bold text-sm text-white flex justify-between items-center">
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-200 font-bold text-sm text-white flex justify-between items-center">
           <span>Extraction Run History</span>
-          <button onclick="fetchExtractionRuns()" class="text-xs text-cyan-400 hover:text-cyan-300 font-normal">
+          <button onclick="fetchExtractionRuns()" class="text-xs text-blue-600 hover:text-blue-600 font-normal">
             <i class="fa-solid fa-arrows-rotate mr-1"></i> Refresh Runs
           </button>
         </div>
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
             <tr>
               <th class="px-4 py-3">Run ID</th>
               <th class="px-4 py-3">Status</th>
@@ -803,25 +812,25 @@
               <th class="px-4 py-3">Error / Notes</th>
             </tr>
           </thead>
-          <tbody id="runs-tbody" class="divide-y divide-slate-800/60 font-mono">
+          <tbody id="runs-tbody" class="divide-y divide-slate-200/60 font-mono">
             <tr><td colspan="7" class="px-4 py-6 text-center text-slate-500">Loading extraction runs...</td></tr>
           </tbody>
         </table>
       </div>
 
       <!-- Extraction Candidate Records Viewer -->
-      <div class="bg-slate-900 border border-slate-800 rounded-xl overflow-hidden shadow-sm">
-        <div class="p-4 border-b border-slate-800 font-bold text-sm text-white flex justify-between items-center">
+      <div class="bg-white border border-slate-200 rounded-xl overflow-hidden shadow-sm">
+        <div class="p-4 border-b border-slate-200 font-bold text-sm text-white flex justify-between items-center">
           <div>
             <span>Extraction Candidate Records</span>
-            <p class="text-[11px] text-slate-400 font-normal">Review candidate events, confidence bands, rule identifiers, and review status.</p>
+            <p class="text-[11px] text-slate-500 font-normal">Review candidate events, confidence bands, rule identifiers, and review status.</p>
           </div>
-          <button onclick="fetchExtractionCandidates()" class="text-xs text-cyan-400 hover:text-cyan-300 font-normal">
+          <button onclick="fetchExtractionCandidates()" class="text-xs text-blue-600 hover:text-blue-600 font-normal">
             <i class="fa-solid fa-arrows-rotate mr-1"></i> Load Candidates
           </button>
         </div>
-        <table class="w-full text-left text-xs text-slate-300">
-          <thead class="bg-slate-950 text-slate-400 uppercase text-[10px] tracking-wider border-b border-slate-800">
+        <table class="w-full text-left text-xs text-slate-700">
+          <thead class="bg-slate-50 text-slate-500 uppercase text-[10px] tracking-wider border-b border-slate-200">
             <tr>
               <th class="px-4 py-3">ID</th>
               <th class="px-4 py-3">Type</th>
@@ -831,7 +840,7 @@
               <th class="px-4 py-3">Subject / Excerpt</th>
             </tr>
           </thead>
-          <tbody id="candidates-tbody" class="divide-y divide-slate-800/60 font-mono">
+          <tbody id="candidates-tbody" class="divide-y divide-slate-200/60 font-mono">
             <tr><td colspan="6" class="px-4 py-6 text-center text-slate-500">Click "Load Candidates" to view extraction candidates.</td></tr>
           </tbody>
         </table>
@@ -843,64 +852,64 @@
   <!-- ==================== MODALS ==================== -->
 
   <!-- Modal 1: Onboard New Product Project -->
-  <div id="modal-new-project" class="hidden fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-      <div class="flex justify-between items-center border-b border-slate-800 pb-3">
-        <h3 class="text-base font-bold text-white flex items-center">
-          <i class="fa-solid fa-folder-plus text-cyan-400 mr-2"></i> Onboard New Product Project
+  <div id="modal-new-project" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
+      <div class="flex justify-between items-center border-b border-slate-200 pb-3">
+        <h3 class="text-base font-bold text-slate-900 flex items-center">
+          <i class="fa-solid fa-folder-plus text-blue-600 mr-2"></i> Onboard New Product Project
         </h3>
-        <button onclick="closeNewProjectModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="closeNewProjectModal()" class="text-slate-400 hover:text-slate-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
       <div class="space-y-3 text-xs">
         <div>
-          <label class="text-slate-300 font-medium block mb-1">Project Name *</label>
-          <input type="text" id="new-proj-name" placeholder="e.g. Apache Flink, Elasticsearch" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500">
+          <label class="text-slate-700 font-medium block mb-1">Project Name *</label>
+          <input type="text" id="new-proj-name" placeholder="e.g. Apache Flink, Elasticsearch" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
         </div>
         <div>
-          <label class="text-slate-300 font-medium block mb-1">Slug (Identifier) *</label>
-          <input type="text" id="new-proj-slug" placeholder="e.g. flink, es" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500">
+          <label class="text-slate-700 font-medium block mb-1">Slug (Identifier) *</label>
+          <input type="text" id="new-proj-slug" placeholder="e.g. flink, es" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
         </div>
         <div>
-          <label class="text-slate-300 font-medium block mb-1">Domain / Category</label>
-          <input type="text" id="new-proj-domain" placeholder="e.g. Stream Processing, Search Engine" class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500">
+          <label class="text-slate-700 font-medium block mb-1">Domain / Category</label>
+          <input type="text" id="new-proj-domain" placeholder="e.g. Stream Processing, Search Engine" class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400">
         </div>
         <div>
-          <label class="text-slate-300 font-medium block mb-1">Description</label>
-          <textarea id="new-proj-desc" rows="2" placeholder="Brief summary of the software product..." class="w-full px-3 py-2 bg-slate-800 border border-slate-700 rounded text-slate-200 focus:outline-none focus:border-cyan-500"></textarea>
+          <label class="text-slate-700 font-medium block mb-1">Description</label>
+          <textarea id="new-proj-desc" rows="2" placeholder="Brief summary of the software product..." class="w-full px-3 py-2 bg-white border border-slate-300 rounded-lg text-slate-900 text-xs focus:outline-none focus:border-blue-600 focus:ring-1 focus:ring-blue-600 shadow-2xs placeholder:text-slate-400"></textarea>
         </div>
         <div id="new-proj-err" class="text-rose-400 text-[11px] min-h-[1rem]"></div>
       </div>
 
-      <div class="flex justify-end space-x-2 pt-2 border-t border-slate-800">
-        <button onclick="closeNewProjectModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs font-medium transition">Cancel</button>
-        <button onclick="submitNewProject()" class="px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-white rounded text-xs font-semibold shadow transition">Create Project</button>
+      <div class="flex justify-end space-x-2 pt-2 border-t border-slate-200">
+        <button onclick="closeNewProjectModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition">Cancel</button>
+        <button onclick="submitNewProject()" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 shadow-sm text-white rounded text-xs font-semibold shadow transition">Create Project</button>
       </div>
     </div>
   </div>
 
   <!-- Modal 2: Feature Detail View (Work 04/09) -->
-  <div id="modal-feature-detail" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="flex justify-between items-center p-5 border-b border-slate-800 bg-slate-950/60">
+  <div id="modal-feature-detail" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-xl max-w-3xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex justify-between items-center p-5 border-b border-slate-200 bg-slate-50/60">
         <div class="flex items-center space-x-3">
           <span id="feat-detail-category" class="px-2.5 py-0.5 rounded text-[11px] font-bold uppercase tracking-wider bg-purple-950 text-purple-300 border border-purple-800">CORE</span>
-          <h3 id="feat-detail-title" class="text-lg font-bold text-white">Feature Title</h3>
+          <h3 id="feat-detail-title" class="text-lg font-bold text-slate-900">Feature Title</h3>
           <span id="feat-detail-status" class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">CANONICAL</span>
         </div>
-        <button onclick="closeFeatureDetailModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="closeFeatureDetailModal()" class="text-slate-400 hover:text-slate-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-300">
+      <div class="p-6 overflow-y-auto space-y-6 text-xs text-slate-700">
         <!-- Description & Meta -->
         <div>
-          <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Description</h4>
-          <p id="feat-detail-desc" class="text-slate-200 leading-relaxed bg-slate-950/50 p-3 rounded-lg border border-slate-800/80"></p>
+          <h4 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Description</h4>
+          <p id="feat-detail-desc" class="text-slate-800 leading-relaxed bg-slate-50/50 p-3 rounded-lg border border-slate-200/80"></p>
         </div>
 
         <!-- Aliases Section -->
         <div>
-          <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2">Aliases & Identity Mappings</h4>
+          <h4 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-2">Aliases & Identity Mappings</h4>
           <div id="feat-detail-aliases" class="flex flex-wrap gap-2">
             <!-- Aliases badges -->
           </div>
@@ -908,7 +917,7 @@
 
         <!-- Linked Records (Issues & Commits) -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div class="bg-slate-950/50 p-3 rounded-lg border border-slate-800/80">
+          <div class="bg-slate-50/50 p-3 rounded-lg border border-slate-200/80">
             <h4 class="text-[11px] font-semibold text-blue-400 uppercase tracking-wider mb-2 flex items-center">
               <i class="fa-solid fa-ticket mr-1.5"></i> Linked Issues (<span id="feat-detail-issue-count">0</span>)
             </h4>
@@ -916,7 +925,7 @@
               <!-- Linked issues -->
             </div>
           </div>
-          <div class="bg-slate-950/50 p-3 rounded-lg border border-slate-800/80">
+          <div class="bg-slate-50/50 p-3 rounded-lg border border-slate-200/80">
             <h4 class="text-[11px] font-semibold text-emerald-400 uppercase tracking-wider mb-2 flex items-center">
               <i class="fa-solid fa-code-commit mr-1.5"></i> Linked Commits (<span id="feat-detail-commit-count">0</span>)
             </h4>
@@ -937,11 +946,11 @@
         </div>
       </div>
 
-      <div class="p-4 border-t border-slate-800 bg-slate-950/60 flex justify-between items-center">
-        <button id="feat-detail-graph-btn" class="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white rounded-lg text-xs font-semibold shadow transition">
+      <div class="p-4 border-t border-slate-200 bg-slate-50/60 flex justify-between items-center">
+        <button id="feat-detail-graph-btn" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-medium shadow-sm transition">
           <i class="fa-solid fa-diagram-project mr-1.5"></i> View in Knowledge Graph
         </button>
-        <button onclick="closeFeatureDetailModal()" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs transition">
+        <button onclick="closeFeatureDetailModal()" class="px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-medium transition">
           Close
         </button>
       </div>
@@ -949,27 +958,27 @@
   </div>
 
   <!-- Modal 3: Temporal Event Evidence Provenance Modal -->
-  <div id="modal-event-detail" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="flex justify-between items-center p-4 border-b border-slate-800 bg-slate-950/60">
+  <div id="modal-event-detail" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50/60">
         <div class="flex items-center space-x-2">
           <span id="ev-detail-badge" class="px-2 py-0.5 rounded text-[10px] font-mono border">TYPE</span>
-          <h3 id="ev-detail-id" class="text-sm font-bold text-white font-mono">Event #</h3>
+          <h3 id="ev-detail-id" class="text-sm font-bold text-slate-900 font-mono">Event #</h3>
         </div>
-        <button onclick="closeEventDetailModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="closeEventDetailModal()" class="text-slate-400 hover:text-slate-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
 
-      <div class="p-5 overflow-y-auto space-y-4 text-xs text-slate-300">
+      <div class="p-5 overflow-y-auto space-y-4 text-xs text-slate-700">
         <div>
-          <h4 class="text-sm font-semibold text-white" id="ev-detail-subject">-</h4>
-          <div class="flex flex-wrap gap-x-4 gap-y-1 text-slate-400 font-mono text-[11px] mt-2">
-            <span>Time: <span id="ev-detail-time" class="text-slate-200">-</span></span>
-            <span>Actor: <span id="ev-detail-actor" class="text-cyan-400">-</span></span>
+          <h4 class="text-sm font-semibold text-slate-900" id="ev-detail-subject">-</h4>
+          <div class="flex flex-wrap gap-x-4 gap-y-1 text-slate-500 font-mono text-[11px] mt-2">
+            <span>Time: <span id="ev-detail-time" class="text-slate-800">-</span></span>
+            <span>Actor: <span id="ev-detail-actor" class="text-blue-600">-</span></span>
             <span>Issue/Commit: <span id="ev-detail-ref" class="text-purple-400">-</span></span>
           </div>
         </div>
 
-        <div class="pt-3 border-t border-slate-800">
+        <div class="pt-3 border-t border-slate-200">
           <h4 class="text-[11px] font-semibold text-rose-400 uppercase tracking-wider mb-2 flex items-center">
             <i class="fa-solid fa-receipt mr-1.5"></i> Verifiable Provenance Evidence (<span id="ev-detail-citations-count">0</span>)
           </h4>
@@ -979,8 +988,8 @@
         </div>
       </div>
 
-      <div class="p-3 border-t border-slate-800 bg-slate-950/60 flex justify-end">
-        <button onclick="closeEventDetailModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition">
+      <div class="p-3 border-t border-slate-200 bg-slate-50/60 flex justify-end">
+        <button onclick="closeEventDetailModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-100 text-slate-700 rounded text-xs transition">
           Close
         </button>
       </div>
@@ -988,28 +997,28 @@
   </div>
 
   <!-- Modal 4: Document Excerpt Modal -->
-  <div id="modal-document-detail" class="hidden fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-slate-900 border border-slate-800 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
-      <div class="flex justify-between items-center p-4 border-b border-slate-800 bg-slate-950/60">
+  <div id="modal-document-detail" class="hidden fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs backdrop-blur-sm flex items-center justify-center p-4">
+    <div class="bg-white border border-slate-200 rounded-xl max-w-2xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden">
+      <div class="flex justify-between items-center p-4 border-b border-slate-200 bg-slate-50/60">
         <div class="flex items-center space-x-2">
           <i class="fa-solid fa-file-lines text-purple-400"></i>
-          <h3 id="doc-detail-filename" class="text-sm font-bold text-white font-mono">Document</h3>
+          <h3 id="doc-detail-filename" class="text-sm font-bold text-slate-900 font-mono">Document</h3>
         </div>
-        <button onclick="closeDocumentDetailModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
+        <button onclick="closeDocumentDetailModal()" class="text-slate-400 hover:text-slate-700 transition"><i class="fa-solid fa-xmark text-lg"></i></button>
       </div>
-      <div class="p-5 overflow-y-auto space-y-3 text-xs text-slate-300">
-        <div class="flex flex-wrap gap-4 text-slate-400 font-mono text-[11px]">
-          <span>Size: <span id="doc-detail-size" class="text-slate-200">0</span> bytes</span>
-          <span>Sections/Pages: <span id="doc-detail-pages" class="text-slate-200">1</span></span>
+      <div class="p-5 overflow-y-auto space-y-3 text-xs text-slate-700">
+        <div class="flex flex-wrap gap-4 text-slate-500 font-mono text-[11px]">
+          <span>Size: <span id="doc-detail-size" class="text-slate-800">0</span> bytes</span>
+          <span>Sections/Pages: <span id="doc-detail-pages" class="text-slate-800">1</span></span>
           <span>SHA-256: <span id="doc-detail-sha" class="text-purple-300 font-mono truncate max-w-xs">-</span></span>
         </div>
         <div>
-          <h4 class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1">Parsed Content Excerpt</h4>
-          <pre id="doc-detail-excerpt" class="bg-slate-950 p-4 rounded-lg border border-slate-800 font-mono text-[11px] text-slate-300 whitespace-pre-wrap max-h-96 overflow-y-auto"></pre>
+          <h4 class="text-[11px] font-semibold text-slate-500 uppercase tracking-wider mb-1">Parsed Content Excerpt</h4>
+          <pre id="doc-detail-excerpt" class="bg-slate-50 p-4 rounded-lg border border-slate-200 font-mono text-[11px] text-slate-700 whitespace-pre-wrap max-h-96 overflow-y-auto"></pre>
         </div>
       </div>
-      <div class="p-3 border-t border-slate-800 bg-slate-950/60 flex justify-end">
-        <button onclick="closeDocumentDetailModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs transition">
+      <div class="p-3 border-t border-slate-200 bg-slate-50/60 flex justify-end">
+        <button onclick="closeDocumentDetailModal()" class="px-4 py-1.5 bg-slate-800 hover:bg-slate-100 text-slate-700 rounded text-xs transition">
           Close
         </button>
       </div>
@@ -1031,15 +1040,18 @@
     // Badge styling helper
     function getBadgeClass(eventType) {
       switch(eventType) {
-        case 'DECISION_APPROVED': return 'bg-emerald-950/80 text-emerald-300 border-emerald-700/60';
-        case 'FEATURE_IMPLEMENTED': return 'bg-blue-950/80 text-blue-300 border-blue-700/60';
-        case 'FEATURE_PROPOSED': return 'bg-cyan-950/80 text-cyan-300 border-cyan-700/60';
-        case 'CONCERN_RAISED': return 'bg-amber-950/80 text-amber-300 border-amber-700/60';
-        case 'DECISION_REVERSED': return 'bg-rose-950/80 text-rose-300 border-rose-700/60';
-        case 'FEATURE_REMOVED': return 'bg-red-950/80 text-red-300 border-red-700/60';
-        case 'BUG_REPORTED': return 'bg-orange-950/80 text-orange-300 border-orange-700/60';
-        case 'ISSUE_RESOLVED': return 'bg-indigo-950/80 text-indigo-300 border-indigo-700/60';
-        default: return 'bg-slate-800 text-slate-300 border-slate-700';
+        case 'DECISION_APPROVED': return 'bg-emerald-50 text-emerald-800 border-emerald-200 font-medium';
+        case 'FEATURE_IMPLEMENTED': return 'bg-blue-50 text-blue-800 border-blue-200 font-medium';
+        case 'FEATURE_PROPOSED': return 'bg-sky-50 text-sky-800 border-sky-200 font-medium';
+        case 'FEATURE_MODIFIED': return 'bg-purple-50 text-purple-800 border-purple-200 font-medium';
+        case 'FEATURE_REMOVED': return 'bg-red-50 text-red-800 border-red-200 font-medium';
+        case 'DECISION_REVERSED': return 'bg-rose-50 text-rose-800 border-rose-200 font-medium';
+        case 'CONCERN_RAISED': return 'bg-amber-50 text-amber-900 border-amber-200 font-medium';
+        case 'BUG_REPORTED': return 'bg-orange-50 text-orange-900 border-orange-200 font-medium';
+        case 'ISSUE_RESOLVED': return 'bg-indigo-50 text-indigo-800 border-indigo-200 font-medium';
+        case 'ISSUE_CREATED': return 'bg-slate-100 text-slate-800 border-slate-300 font-medium';
+        case 'CODE_COMMITTED': return 'bg-slate-100 text-slate-800 border-slate-300 font-medium';
+        default: return 'bg-slate-100 text-slate-700 border-slate-200 font-medium';
       }
     }
 
@@ -1052,8 +1064,8 @@
         const elTab = document.getElementById(`tab-${t}`);
         if (elView) elView.classList.add('hidden');
         if (elTab) {
-          elTab.classList.remove('active', 'text-cyan-400');
-          elTab.classList.add('text-slate-400');
+          elTab.classList.remove('active', 'text-blue-600');
+          elTab.classList.add('text-slate-500');
         }
       });
 
@@ -1061,8 +1073,8 @@
       const activeTab = document.getElementById(`tab-${tabName}`);
       if (activeView) activeView.classList.remove('hidden');
       if (activeTab) {
-        activeTab.classList.add('active', 'text-cyan-400');
-        activeTab.classList.remove('text-slate-400');
+        activeTab.classList.add('active', 'text-blue-600');
+        activeTab.classList.remove('text-slate-500');
       }
 
       refreshActiveTab();
@@ -1153,14 +1165,14 @@
           taxonomy.forEach(t => {
             const count = (data.events_by_type && data.events_by_type[t]) || 0;
             const card = document.createElement('div');
-            card.className = 'p-3 bg-slate-800/40 border border-slate-800 rounded-lg flex flex-col justify-between hover:border-slate-700 transition cursor-pointer';
+            card.className = 'p-3.5 bg-slate-50/80 hover:bg-white border border-slate-200 hover:border-blue-300 hover:shadow-xs rounded-xl flex flex-col justify-between transition cursor-pointer';
             card.onclick = () => {
               document.getElementById('filter-event-type').value = t;
               switchTab('explorer');
             };
             card.innerHTML = `
-              <div class="text-[11px] font-mono text-slate-400 truncate mb-1" title="${t}">${t}</div>
-              <div class="text-lg font-bold text-white">${count.toLocaleString()}</div>
+              <div class="text-[11px] font-mono text-slate-500 truncate mb-1" title="${t}">${t}</div>
+              <div class="text-lg font-bold text-slate-900">${count.toLocaleString()}</div>
             `;
             grid.appendChild(card);
           });
@@ -1198,7 +1210,7 @@
       const container = document.getElementById('features-grid');
       if (!features || features.length === 0) {
         container.innerHTML = `
-          <div class="p-8 text-center text-slate-500 col-span-2 border border-dashed border-slate-800 rounded-xl space-y-2">
+          <div class="p-8 text-center text-slate-500 col-span-2 border border-dashed border-slate-200 rounded-xl space-y-2">
             <p>No features registered for this project yet.</p>
             <p class="text-xs text-slate-600">Click "Re-Index Links" or ingest engineering data to establish feature identities.</p>
           </div>
@@ -1209,29 +1221,29 @@
       container.innerHTML = '';
       features.forEach(f => {
         const card = document.createElement('div');
-        card.className = 'bg-slate-900 border border-slate-800 hover:border-purple-500/50 rounded-xl p-5 space-y-3 transition shadow-sm';
-        const aliasesBadges = (f.aliases || []).map(a => `<span class="px-2 py-0.5 rounded bg-slate-800 text-purple-300 text-[10px] font-mono">${a.alias_name}</span>`).join(' ');
+        card.className = 'bg-white border border-slate-200 hover:border-purple-500/50 rounded-xl p-5 space-y-3 transition shadow-sm';
+        const aliasesBadges = (f.aliases || []).map(a => `<span class="px-2 py-0.5 rounded bg-slate-100 text-slate-700 border border-slate-200 text-[10px] font-mono">${a.alias_name}</span>`).join(' ');
 
         card.innerHTML = `
           <div class="flex justify-between items-start">
             <div>
-              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-purple-950 text-purple-400 border border-purple-800/60">${f.feature_category || 'CORE'}</span>
-              <h3 class="text-base font-bold text-white mt-1.5">${f.canonical_name}</h3>
+              <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-indigo-50 text-indigo-700 border border-indigo-200">${f.feature_category || 'CORE'}</span>
+              <h3 class="text-base font-bold text-slate-900 mt-1.5">${f.canonical_name}</h3>
             </div>
-            <span class="px-2 py-0.5 rounded text-[10px] font-semibold bg-emerald-950 text-emerald-400 border border-emerald-800">${f.resolution_status || 'CANONICAL'}</span>
+            <span class="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">${f.resolution_status || 'CANONICAL'}</span>
           </div>
-          <p class="text-xs text-slate-400 line-clamp-2">${f.description || 'No description recorded.'}</p>
-          <div class="flex flex-wrap gap-1 items-center pt-2 border-t border-slate-800/60">
+          <p class="text-xs text-slate-500 line-clamp-2">${f.description || 'No description recorded.'}</p>
+          <div class="flex flex-wrap gap-1 items-center pt-2 border-t border-slate-200/60">
             <span class="text-[10px] text-slate-500 font-semibold uppercase mr-1">Aliases:</span>
             ${aliasesBadges || '<span class="text-[10px] text-slate-500 italic">None</span>'}
           </div>
-          <div class="flex justify-between items-center pt-2 text-[11px] text-slate-400">
+          <div class="flex justify-between items-center pt-2 text-[11px] text-slate-500">
             <span>Observed: ${f.first_observed_at ? f.first_observed_at.substring(0, 10) : 'Historical'}</span>
             <div class="flex space-x-2">
-              <button onclick="openFeatureDetailModal(${f.id})" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 rounded text-xs transition">
+              <button onclick="openFeatureDetailModal(${f.id})" class="px-2.5 py-1 bg-white hover:bg-slate-50 text-slate-700 border border-slate-200 rounded-lg text-xs font-medium shadow-2xs transition">
                 <i class="fa-solid fa-circle-info mr-1"></i> Details
               </button>
-              <button onclick="viewFeatureGraph(${f.id})" class="px-2.5 py-1 bg-purple-900/60 hover:bg-purple-800 text-purple-200 rounded text-xs transition">
+              <button onclick="viewFeatureGraph(${f.id})" class="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-lg text-xs font-medium shadow-2xs transition">
                 <i class="fa-solid fa-diagram-project mr-1"></i> Graph
               </button>
             </div>
@@ -1260,7 +1272,7 @@
 
       const resBox = document.getElementById('feature-resolve-results');
       resBox.classList.remove('hidden');
-      resBox.innerHTML = '<div class="text-xs text-slate-400"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Resolving term against feature index...</div>';
+      resBox.innerHTML = '<div class="text-xs text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Resolving term against feature index...</div>';
 
       try {
         const res = await fetch('/api/features/resolve', {
@@ -1272,23 +1284,23 @@
         if (!res.ok) throw new Error(data.detail || 'Resolution query failed');
 
         if (data.total_matches === 0) {
-          resBox.innerHTML = `<div class="text-xs text-slate-400 italic">No feature match found for "${term}" in this project.</div>`;
+          resBox.innerHTML = `<div class="text-xs text-slate-500 italic">No feature match found for "${term}" in this project.</div>`;
           return;
         }
 
         resBox.innerHTML = `
           <div class="space-y-2">
-            <div class="text-[11px] text-slate-400 font-mono">Found ${data.total_matches} candidate identity matches ${data.is_ambiguous ? '<span class="text-amber-400">(Ambiguity Flagged)</span>' : ''}:</div>
+            <div class="text-[11px] text-slate-500 font-mono">Found ${data.total_matches} candidate identity matches ${data.is_ambiguous ? '<span class="text-amber-400">(Ambiguity Flagged)</span>' : ''}:</div>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
               ${data.candidates.map(c => `
-                <div class="p-2.5 bg-slate-950 border border-slate-800 rounded-lg flex justify-between items-center hover:border-purple-500/50 transition">
+                <div class="p-2.5 bg-slate-50 border border-slate-200 rounded-lg flex justify-between items-center hover:border-purple-500/50 transition">
                   <div>
-                    <div class="font-bold text-slate-200 text-xs">${c.canonical_name}</div>
-                    <div class="text-[10px] text-slate-400">Match: <span class="text-purple-400 font-mono">${c.match_type}</span> ${c.matched_alias ? `via "${c.matched_alias}"` : ''}</div>
+                    <div class="font-bold text-slate-800 text-xs">${c.canonical_name}</div>
+                    <div class="text-[10px] text-slate-500">Match: <span class="text-purple-400 font-mono">${c.match_type}</span> ${c.matched_alias ? `via "${c.matched_alias}"` : ''}</div>
                   </div>
                   <div class="text-right">
                     <span class="px-2 py-0.5 rounded text-[10px] font-mono bg-purple-950 text-purple-300 border border-purple-800">${(c.confidence * 100).toFixed(0)}%</span>
-                    <button onclick="openFeatureDetailModal(${c.feature_id})" class="block text-[10px] text-cyan-400 hover:underline mt-1">View Details</button>
+                    <button onclick="openFeatureDetailModal(${c.feature_id})" class="block text-[10px] text-blue-600 hover:underline mt-1">View Details</button>
                   </div>
                 </div>
               `).join('')}
@@ -1328,7 +1340,7 @@
         if (f.aliases && f.aliases.length > 0) {
           f.aliases.forEach(a => {
             const span = document.createElement('span');
-            span.className = 'px-2.5 py-1 rounded bg-slate-800 text-purple-300 font-mono text-[11px] border border-slate-700 flex items-center space-x-1';
+            span.className = 'px-2.5 py-1 rounded bg-slate-800 text-purple-300 font-mono text-[11px] border border-slate-200 flex items-center space-x-1';
             span.innerHTML = `<span>${a.alias_name}</span> <span class="text-[9px] text-slate-500">(${a.alias_type})</span>`;
             aliasesContainer.appendChild(span);
           });
@@ -1350,8 +1362,8 @@
         if (issueLinks.length > 0) {
           issueLinks.forEach(l => {
             const div = document.createElement('div');
-            div.className = 'flex justify-between py-1 border-b border-slate-800/60';
-            div.innerHTML = `<span class="text-cyan-400">${l.record_id}</span> <span class="text-[10px] text-slate-500">${l.link_type}</span>`;
+            div.className = 'flex justify-between py-1 border-b border-slate-200/60';
+            div.innerHTML = `<span class="text-blue-600">${l.record_id}</span> <span class="text-[10px] text-slate-500">${l.link_type}</span>`;
             issuesContainer.appendChild(div);
           });
         } else {
@@ -1361,7 +1373,7 @@
         if (commitLinks.length > 0) {
           commitLinks.forEach(l => {
             const div = document.createElement('div');
-            div.className = 'flex justify-between py-1 border-b border-slate-800/60';
+            div.className = 'flex justify-between py-1 border-b border-slate-200/60';
             div.innerHTML = `<span class="text-emerald-400">${l.record_id.substring(0, 8)}</span> <span class="text-[10px] text-slate-500">${l.link_type}</span>`;
             commitsContainer.appendChild(div);
           });
@@ -1388,17 +1400,17 @@
           } else {
             events.forEach(ev => {
               const div = document.createElement('div');
-              div.className = 'p-2.5 bg-slate-950 border border-slate-800/80 rounded-lg flex items-start space-x-3 text-xs';
+              div.className = 'p-2.5 bg-slate-50 border border-slate-200/80 rounded-lg flex items-start space-x-3 text-xs';
               const badgeClass = getBadgeClass(ev.event_type);
               const timeStr = ev.event_time ? new Date(ev.event_time).toISOString().replace('T', ' ').substring(0, 10) : 'Historical';
               div.innerHTML = `
                 <span class="text-[11px] font-mono text-slate-500 whitespace-nowrap mt-0.5">${timeStr}</span>
                 <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeClass}">${ev.event_type}</span>
                 <div class="flex-1">
-                  <div class="text-slate-200 font-medium">${ev.subject}</div>
-                  <div class="text-[10px] text-slate-400 mt-0.5 flex space-x-2">
+                  <div class="text-slate-800 font-medium">${ev.subject}</div>
+                  <div class="text-[10px] text-slate-500 mt-0.5 flex space-x-2">
                     ${ev.actor ? `<span>Actor: @${ev.actor}</span>` : ''}
-                    ${ev.issue_id ? `<span class="text-cyan-400 font-mono">${ev.issue_id}</span>` : ''}
+                    ${ev.issue_id ? `<span class="text-blue-600 font-mono">${ev.issue_id}</span>` : ''}
                   </div>
                 </div>
               `;
@@ -1483,7 +1495,7 @@
         if (datalist) datalist.innerHTML = samples.map(s => `<option value="${s}">`).join('');
         if (sampleChips) {
           sampleChips.innerHTML = samples.slice(0, 4).map(s => `
-            <button type="button" onclick="setGraphSample('${s}')" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-700 hover:text-cyan-300 text-slate-300 rounded border border-slate-700 text-[10px] transition">
+            <button type="button" onclick="setGraphSample('${s}')" class="px-1.5 py-0.5 bg-slate-800 hover:bg-slate-100 hover:text-blue-600 text-slate-700 rounded border border-slate-200 text-[10px] transition">
               ${s}
             </button>
           `).join('');
@@ -1677,16 +1689,16 @@
       const el = document.getElementById('node-inspector-content');
       let propsHtml = '';
       for (const [k, v] of Object.entries(node.properties || {})) {
-        if (v) propsHtml += `<div class="flex justify-between py-1 border-b border-slate-800"><span class="text-slate-500 font-mono">${k}:</span><span class="text-slate-300 font-mono truncate max-w-[150px]" title="${v}">${v}</span></div>`;
+        if (v) propsHtml += `<div class="flex justify-between py-1 border-b border-slate-200"><span class="text-slate-500 font-mono">${k}:</span><span class="text-slate-700 font-mono truncate max-w-[150px]" title="${v}">${v}</span></div>`;
       }
 
       el.innerHTML = `
         <div class="space-y-2">
           <div class="flex justify-between items-center">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-cyan-400 font-mono">${node.type}</span>
+            <span class="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-slate-800 text-blue-600 font-mono">${node.type}</span>
             <span class="text-[10px] text-slate-500 font-mono truncate max-w-[120px]">${node.id}</span>
           </div>
-          <h4 class="text-sm font-bold text-white">${node.label}</h4>
+          <h4 class="text-sm font-bold text-slate-900">${node.label}</h4>
           <div class="mt-3 pt-2 text-[11px]">${propsHtml || '<span class="text-slate-500 italic">No custom properties</span>'}</div>
         </div>
       `;
@@ -1813,7 +1825,7 @@
         pillsContainer.innerHTML = '';
         samples.forEach(s => {
           const btn = document.createElement('button');
-          btn.className = 'px-3 py-1.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-[11px] font-medium transition text-left';
+          btn.className = 'px-3.5 py-1.5 rounded-full bg-white hover:bg-slate-50 text-slate-700 hover:text-slate-900 border border-slate-200 hover:border-slate-300 shadow-2xs text-[11px] font-medium transition text-left cursor-pointer';
           btn.innerText = s.question;
           btn.onclick = () => {
             document.getElementById('qa-input').value = s.question;
@@ -1837,7 +1849,7 @@
 
       const resContainer = document.getElementById('qa-result-container');
       resContainer.classList.remove('hidden');
-      document.getElementById('qa-answer-markdown').innerHTML = '<p class="text-slate-400 italic"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Performing entity resolution & retrieving evidence citations...</p>';
+      document.getElementById('qa-answer-markdown').innerHTML = '<p class="text-slate-500 italic"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Performing entity resolution & retrieving evidence citations...</p>';
 
       try {
         const res = await fetch('/api/qa/ask', {
@@ -1855,8 +1867,11 @@
 
         // Header badges
         document.getElementById('qa-feature-badge').innerText = data.canonical_feature || 'General Product History';
+        document.getElementById('qa-feature-badge').className = 'px-2.5 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-medium text-xs';
         document.getElementById('qa-mode-badge').innerText = data.synthesis_mode;
+        document.getElementById('qa-mode-badge').className = 'px-2.5 py-1 rounded-full bg-slate-100 text-slate-700 border border-slate-200 font-mono text-[11px]';
         document.getElementById('qa-confidence-badge').innerText = `Confidence: ${((data.confidence || 1.0) * 100).toFixed(0)}%`;
+        document.getElementById('qa-confidence-badge').className = 'px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-800 border border-emerald-200 font-medium text-xs';
 
         // Render Markdown Answer
         document.getElementById('qa-answer-markdown').innerHTML = marked.parse(data.answer);
@@ -1869,13 +1884,13 @@
         } else {
           data.temporal_timeline.forEach(item => {
             const row = document.createElement('div');
-            row.className = 'flex items-center space-x-3 text-xs bg-slate-950 p-2.5 rounded-lg border border-slate-800/80';
+            row.className = 'flex items-center space-x-3 text-xs bg-slate-50 p-2.5 rounded-lg border border-slate-200/80';
             const badgeClass = getBadgeClass(item.event_type);
             row.innerHTML = `
-              <span class="text-slate-400 font-mono text-[11px] whitespace-nowrap">${item.date || 'Undated'}</span>
+              <span class="text-slate-500 font-mono text-[11px] whitespace-nowrap">${item.date || 'Undated'}</span>
               <span class="px-2 py-0.5 rounded text-[10px] font-mono border ${badgeClass}">${item.event_type}</span>
-              <span class="text-slate-200 flex-1 truncate" title="${item.summary}">${item.summary}</span>
-              ${item.actor ? `<span class="text-[11px] text-cyan-400 font-mono">@${item.actor}</span>` : ''}
+              <span class="text-slate-800 flex-1 truncate" title="${item.summary}">${item.summary}</span>
+              ${item.actor ? `<span class="text-[11px] text-blue-600 font-mono">@${item.actor}</span>` : ''}
             `;
             tlContainer.appendChild(row);
           });
@@ -1889,13 +1904,13 @@
         } else {
           data.citations.forEach(cit => {
             const card = document.createElement('div');
-            card.className = 'bg-slate-950 border border-slate-800 rounded-lg p-3 space-y-2';
+            card.className = 'bg-slate-50 border border-slate-200 rounded-lg p-3 space-y-2';
             card.innerHTML = `
               <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
                 <span>${(cit.record_type || 'SOURCE').toUpperCase()}: ${cit.record_id}</span>
                 <span class="text-rose-400 truncate max-w-[140px]" title="${cit.evidence_hash}">sha256:${cit.evidence_hash ? cit.evidence_hash.substring(0, 10) : 'raw'}</span>
               </div>
-              <p class="text-[11px] text-slate-300 italic line-clamp-3">"${cit.excerpt}"</p>
+              <p class="text-[11px] text-slate-700 italic line-clamp-3">"${cit.excerpt}"</p>
             `;
             citContainer.appendChild(card);
           });
@@ -1911,16 +1926,30 @@
     // ==================== WORK 03: EVENT EXPLORER ====================
     let allEventsPageCache = [];
 
+    function resetEventsFilters() {
+      const typeEl = document.getElementById('filter-event-type');
+      if (typeEl) typeEl.value = '';
+      const issueEl = document.getElementById('filter-issue-id');
+      if (issueEl) issueEl.value = '';
+      const actorEl = document.getElementById('filter-actor');
+      if (actorEl) actorEl.value = '';
+      const searchEl = document.getElementById('filter-search');
+      if (searchEl) searchEl.value = '';
+      fetchEvents(0);
+    }
+
     async function fetchEvents(page = 0) {
       currentEventsPage = page;
-      const type = document.getElementById('filter-event-type').value;
-      const issue = document.getElementById('filter-issue-id').value.trim();
-      const actor = document.getElementById('filter-actor').value.trim();
+      const type = (document.getElementById('filter-event-type')?.value || '').trim();
+      const issue = (document.getElementById('filter-issue-id')?.value || '').trim();
+      const actor = (document.getElementById('filter-actor')?.value || '').trim();
+      const search = (document.getElementById('filter-search')?.value || '').trim();
 
       let url = `/api/events?skip=${page * PAGE_SIZE}&limit=${PAGE_SIZE}&project_id=${currentProjectId}${currentProjectId === 1 ? '&dataset_name=KafkaSQLite' : ''}`;
       if (type) url += `&event_type=${encodeURIComponent(type)}`;
       if (issue) url += `&issue_id=${encodeURIComponent(issue)}`;
       if (actor) url += `&actor=${encodeURIComponent(actor)}`;
+      if (search) url += `&search=${encodeURIComponent(search)}`;
 
       const tbody = document.getElementById('events-tbody');
       tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500"><i class="fa-solid fa-spinner fa-spin mr-2"></i> Fetching events...</td></tr>';
@@ -1929,10 +1958,27 @@
         const res = await fetch(url);
         const data = await res.json();
         allEventsPageCache = data;
-        document.getElementById('events-count').innerText = data.length;
+
+        const totalHeader = res.headers.get('X-Total-Count');
+        const totalCount = totalHeader ? parseInt(totalHeader) : data.length;
+        document.getElementById('events-count').innerText = totalHeader ? `${data.length} of ${totalCount.toLocaleString()}` : `${data.length}`;
         document.getElementById('events-page-indicator').innerText = `Page ${page + 1}`;
         document.getElementById('btn-prev-events').disabled = page === 0;
-        document.getElementById('btn-next-events').disabled = data.length < PAGE_SIZE;
+        document.getElementById('btn-next-events').disabled = (page + 1) * PAGE_SIZE >= totalCount;
+
+        const activeFiltersEl = document.getElementById('events-active-filters');
+        if (activeFiltersEl) {
+          const pills = [];
+          if (type) pills.push(`Type: <span class="text-emerald-400 font-bold">${type}</span>`);
+          if (issue) pills.push(`Issue: <span class="text-blue-600 font-bold">${issue}</span>`);
+          if (actor) pills.push(`Actor: <span class="text-amber-400 font-bold">${actor}</span>`);
+          if (search) pills.push(`Search: <span class="text-purple-400 font-bold">"${search}"</span>`);
+          if (pills.length > 0) {
+            activeFiltersEl.innerHTML = `<span class="text-slate-500">Filter active:</span> ${pills.join(' • ')} <span class="text-slate-500">(${totalCount.toLocaleString()} matching events)</span>`;
+          } else {
+            activeFiltersEl.innerHTML = `<span class="text-slate-500">Showing unfiltered timeline (${totalCount.toLocaleString()} total events)</span>`;
+          }
+        }
 
         if (data.length === 0) {
           tbody.innerHTML = '<tr><td colspan="6" class="px-4 py-8 text-center text-slate-500">No events matched current filters for this project.</td></tr>';
@@ -1948,10 +1994,10 @@
 
           tr.innerHTML = `
             <td class="px-4 py-3 whitespace-nowrap"><span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">${ev.event_type}</span></td>
-            <td class="px-4 py-3 whitespace-nowrap text-slate-400 font-mono text-[11px]">${timeStr}</td>
-            <td class="px-4 py-3 text-slate-200 max-w-md truncate" title="${ev.subject}">${ev.subject}</td>
-            <td class="px-4 py-3 whitespace-nowrap font-mono text-cyan-400">${ev.issue_id || (ev.commit_hash ? ev.commit_hash.substring(0, 8) : '-')}</td>
-            <td class="px-4 py-3 whitespace-nowrap text-slate-300">${ev.actor || 'system'}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-500 font-mono text-[11px]">${timeStr}</td>
+            <td class="px-4 py-3 text-slate-800 max-w-md truncate" title="${ev.subject}">${ev.subject}</td>
+            <td class="px-4 py-3 whitespace-nowrap font-mono text-blue-600">${ev.issue_id || (ev.commit_hash ? ev.commit_hash.substring(0, 8) : '-')}</td>
+            <td class="px-4 py-3 whitespace-nowrap text-slate-700">${ev.actor || 'system'}</td>
             <td class="px-4 py-3 whitespace-nowrap text-right text-[11px] font-mono">
               <button onclick="openEventDetailModal(${idx})" class="text-purple-400 hover:text-purple-300 underline">${(ev.evidence || []).length} citations</button>
             </td>
@@ -1991,13 +2037,13 @@
       } else {
         evidence.forEach(item => {
           const card = document.createElement('div');
-          card.className = 'bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1.5';
+          card.className = 'bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5';
           card.innerHTML = `
             <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
-              <span class="text-cyan-400">${item.source_record_type || 'SOURCE'}: ${item.source_record_id || '-'}</span>
+              <span class="text-blue-600">${item.source_record_type || 'SOURCE'}: ${item.source_record_id || '-'}</span>
               <span class="text-rose-400 font-mono">sha256:${item.evidence_hash ? item.evidence_hash.substring(0, 10) : 'raw'}</span>
             </div>
-            <p class="text-slate-300 italic text-[11px] bg-slate-900/60 p-2 rounded border border-slate-800/80">"${item.excerpt_text || 'No excerpt text.'}"</p>
+            <p class="text-slate-700 italic text-[11px] bg-white/60 p-2 rounded border border-slate-200/80">"${item.excerpt_text || 'No excerpt text.'}"</p>
           `;
           citationsList.appendChild(card);
         });
@@ -2038,13 +2084,13 @@
         } else {
           evidence.forEach(item => {
             const card = document.createElement('div');
-            card.className = 'bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1.5';
+            card.className = 'bg-slate-50 p-3 rounded-lg border border-slate-200 space-y-1.5';
             card.innerHTML = `
               <div class="flex justify-between items-center text-[10px] font-mono text-slate-500">
-                <span class="text-cyan-400">${item.evidence_role || 'SOURCE'}: ${item.source_record_id || '-'}</span>
+                <span class="text-blue-600">${item.evidence_role || 'SOURCE'}: ${item.source_record_id || '-'}</span>
                 <span class="text-rose-400 font-mono">sha256:${item.evidence_hash ? item.evidence_hash.substring(0, 10) : 'raw'}</span>
               </div>
-              <p class="text-slate-300 italic text-[11px] bg-slate-900/60 p-2 rounded border border-slate-800/80">"${item.evidence_excerpt || 'No excerpt text.'}"</p>
+              <p class="text-slate-700 italic text-[11px] bg-white/60 p-2 rounded border border-slate-200/80">"${item.evidence_excerpt || 'No excerpt text.'}"</p>
             `;
             citationsList.appendChild(card);
           });
@@ -2075,7 +2121,7 @@
         }
         const data = await res.json();
         document.getElementById('timeline-issue-title').innerText = `${data.issue_id || issueKey}: ${data.summary || 'Issue'}`;
-        document.getElementById('timeline-issue-subtitle').innerHTML = `Status: <span class="text-slate-200 font-semibold">${data.status || 'Unknown'}</span> &bull; Total Chronological Events: <span class="text-cyan-400 font-semibold">${data.total_events}</span>`;
+        document.getElementById('timeline-issue-subtitle').innerHTML = `Status: <span class="text-slate-800 font-semibold">${data.status || 'Unknown'}</span> &bull; Total Chronological Events: <span class="text-blue-600 font-semibold">${data.total_events}</span>`;
 
         if (!data.timeline || data.timeline.length === 0) {
           container.innerHTML = `<p class="text-xs text-slate-500 italic">No temporal events recorded for ${issueKey} in this project.</p>`;
@@ -2090,20 +2136,20 @@
           const badgeClass = getBadgeClass(item.event_type);
 
           div.innerHTML = `
-            <div class="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-700 flex items-center justify-center shrink-0 z-10">
+            <div class="w-8 h-8 rounded-full bg-slate-800 border-2 border-slate-200 flex items-center justify-center shrink-0 z-10">
               <span class="w-2.5 h-2.5 rounded-full bg-cyan-400"></span>
             </div>
-            <div class="flex-1 bg-slate-800/40 border border-slate-800 rounded-lg p-4 space-y-2">
+            <div class="flex-1 bg-slate-800/40 border border-slate-200 rounded-lg p-4 space-y-2">
               <div class="flex justify-between items-start">
                 <span class="px-2 py-0.5 rounded text-[11px] font-mono border ${badgeClass}">${item.event_type}</span>
-                <span class="text-[11px] text-slate-400 font-mono">${timeStr}</span>
+                <span class="text-[11px] text-slate-500 font-mono">${timeStr}</span>
               </div>
               <h4 class="text-sm font-medium text-slate-100">${item.subject}</h4>
-              <p class="text-xs text-slate-400">Actor: <span class="text-slate-200 font-medium">${item.actor || 'system'}</span></p>
+              <p class="text-xs text-slate-500">Actor: <span class="text-slate-800 font-medium">${item.actor || 'system'}</span></p>
               ${item.evidence && item.evidence.length > 0 ? `
-                <div class="mt-2 pt-2 border-t border-slate-800/80 text-[11px] text-slate-400">
+                <div class="mt-2 pt-2 border-t border-slate-200/80 text-[11px] text-slate-500">
                   <span class="text-purple-400 font-mono font-medium">Evidence (${item.evidence.length}):</span>
-                  <p class="italic text-slate-300 mt-1 bg-slate-950/70 p-2 rounded border border-slate-800">"${item.evidence[0].evidence_excerpt}"</p>
+                  <p class="italic text-slate-700 mt-1 bg-slate-50/70 p-2 rounded border border-slate-200">"${item.evidence[0].evidence_excerpt}"</p>
                 </div>
               ` : ''}
             </div>
@@ -2173,12 +2219,12 @@
           const statusClass = run.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : (run.status === 'RUNNING' ? 'bg-blue-950 text-blue-400 border-blue-800 animate-pulse' : 'bg-rose-950 text-rose-400 border-rose-800');
 
           tr.innerHTML = `
-            <td class="px-4 py-3 font-mono text-cyan-400 font-bold">#${run.id}</td>
+            <td class="px-4 py-3 font-mono text-blue-600 font-bold">#${run.id}</td>
             <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${run.status}</span></td>
-            <td class="px-4 py-3 text-slate-300">${run.extraction_mode}</td>
-            <td class="px-4 py-3 text-slate-300 font-mono">${(run.records_scanned || 0).toLocaleString()}</td>
+            <td class="px-4 py-3 text-slate-700">${run.extraction_mode}</td>
+            <td class="px-4 py-3 text-slate-700 font-mono">${(run.records_scanned || 0).toLocaleString()}</td>
             <td class="px-4 py-3 text-emerald-400 font-mono font-semibold">${(run.events_accepted || 0).toLocaleString()}</td>
-            <td class="px-4 py-3 text-slate-400 font-mono">${time}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono">${time}</td>
             <td class="px-4 py-3 text-slate-500 font-mono text-[10px] max-w-xs truncate">${run.error_summary || '-'}</td>
           `;
           tbody.appendChild(tr);
@@ -2203,14 +2249,14 @@
         candidates.forEach(c => {
           const tr = document.createElement('tr');
           tr.className = 'hover:bg-slate-800/40 transition';
-          const statusClass = c.review_status === 'ACCEPTED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-800 text-slate-400 border-slate-700';
+          const statusClass = c.review_status === 'ACCEPTED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : 'bg-slate-800 text-slate-500 border-slate-200';
           tr.innerHTML = `
-            <td class="px-4 py-3 font-mono text-cyan-400">#${c.id}</td>
+            <td class="px-4 py-3 font-mono text-blue-600">#${c.id}</td>
             <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-mono border ${getBadgeClass(c.event_type)}">${c.event_type}</span></td>
-            <td class="px-4 py-3 text-slate-300 font-mono">${(c.confidence_score * 100).toFixed(0)}%</td>
+            <td class="px-4 py-3 text-slate-700 font-mono">${(c.confidence_score * 100).toFixed(0)}%</td>
             <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${c.review_status}</span></td>
-            <td class="px-4 py-3 text-slate-400 text-[11px]">${c.extractor_rule_name || '-'}</td>
-            <td class="px-4 py-3 text-slate-200 max-w-sm truncate" title="${c.raw_excerpt || ''}">${c.raw_excerpt || '-'}</td>
+            <td class="px-4 py-3 text-slate-500 text-[11px]">${c.extractor_rule_name || '-'}</td>
+            <td class="px-4 py-3 text-slate-800 max-w-sm truncate" title="${c.raw_excerpt || ''}">${c.raw_excerpt || '-'}</td>
           `;
           tbody.appendChild(tr);
         });
@@ -2222,8 +2268,9 @@
     // ==================== WORK 07: SOURCES & ONBOARDING ====================
     async function testJiraConnection() {
       const msg = document.getElementById('jira-status-msg');
-      msg.className = 'text-[11px] text-cyan-400';
-      msg.innerText = 'Validating connection...';
+      const btn = document.getElementById('jira-test-btn');
+      msg.className = 'text-[11px] text-blue-600 flex items-center';
+      msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Validating connection...';
       const base_url = document.getElementById('jira-base-url').value.trim();
       const email = document.getElementById('jira-email').value.trim();
       const api_token = document.getElementById('jira-api-token').value.trim();
@@ -2235,6 +2282,7 @@
       }
 
       try {
+        if (btn) btn.disabled = true;
         const res = await fetch(`/api/projects/${currentProjectId}/sources/jira/validate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2251,11 +2299,14 @@
       } catch (err) {
         msg.className = 'text-[11px] text-rose-400';
         msg.innerText = 'Error: ' + err;
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
     async function saveAndSyncJira() {
       const msg = document.getElementById('jira-status-msg');
+      const btn = document.getElementById('jira-sync-btn');
       const base_url = document.getElementById('jira-base-url').value.trim();
       const email = document.getElementById('jira-email').value.trim();
       const api_token = document.getElementById('jira-api-token').value.trim();
@@ -2267,28 +2318,43 @@
       }
 
       try {
-        msg.className = 'text-[11px] text-cyan-400';
-        msg.innerText = 'Connecting & initiating sync...';
-        await fetch(`/api/projects/${currentProjectId}/sources/jira`, {
+        if (btn) btn.disabled = true;
+        msg.className = 'text-[11px] text-blue-600 flex items-center';
+        msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Saving source connection...';
+        const connRes = await fetch(`/api/projects/${currentProjectId}/sources/jira`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ base_url, email, api_token }),
         });
-        const syncRes = await fetch(`/api/projects/${currentProjectId}/sources/jira/sync?max_issues=50`, { method: 'POST' });
+        const connData = await connRes.json();
+        if (!connRes.ok) {
+          throw new Error(connData.detail || 'Connection setup failed');
+        }
+
+        msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Ingesting Jira issues & changelogs...';
+        const syncUrl = `/api/projects/${currentProjectId}/sources/jira/sync?connection_id=${connData.id}&max_issues=10`;
+        const syncRes = await fetch(syncUrl, { method: 'POST' });
         const syncData = await syncRes.json();
+        if (!syncRes.ok) {
+          throw new Error(syncData.detail || syncData.error_summary || 'Sync failed');
+        }
+
         msg.className = 'text-[11px] text-emerald-400 font-semibold';
-        msg.innerText = `✓ Jira synced! Run #${syncData.id} status: ${syncData.status} (Created: ${syncData.records_created})`;
+        msg.innerText = `✓ Jira synced! Run #${syncData.id} [${syncData.status}]: Discovered ${syncData.records_discovered}, Created ${syncData.records_created}`;
         loadIngestionRuns();
       } catch (err) {
         msg.className = 'text-[11px] text-rose-400';
         msg.innerText = 'Sync failed: ' + err;
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
     async function testGithubConnection() {
       const msg = document.getElementById('github-status-msg');
-      msg.className = 'text-[11px] text-cyan-400';
-      msg.innerText = 'Validating repository...';
+      const btn = document.getElementById('github-test-btn');
+      msg.className = 'text-[11px] text-blue-600 flex items-center';
+      msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Validating repository...';
       const repo_url = document.getElementById('github-repo-url').value.trim();
       const token = document.getElementById('github-token').value.trim();
 
@@ -2299,6 +2365,7 @@
       }
 
       try {
+        if (btn) btn.disabled = true;
         const res = await fetch(`/api/projects/${currentProjectId}/sources/github/validate`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -2315,11 +2382,14 @@
       } catch (err) {
         msg.className = 'text-[11px] text-rose-400';
         msg.innerText = 'Error: ' + err;
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
     async function saveAndSyncGithub() {
       const msg = document.getElementById('github-status-msg');
+      const btn = document.getElementById('github-sync-btn');
       const repo_url = document.getElementById('github-repo-url').value.trim();
       const token = document.getElementById('github-token').value.trim();
 
@@ -2330,21 +2400,35 @@
       }
 
       try {
-        msg.className = 'text-[11px] text-cyan-400';
-        msg.innerText = 'Connecting & initiating GitHub sync...';
-        await fetch(`/api/projects/${currentProjectId}/sources/github`, {
+        if (btn) btn.disabled = true;
+        msg.className = 'text-[11px] text-blue-600 flex items-center';
+        msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Registering GitHub source...';
+        const connRes = await fetch(`/api/projects/${currentProjectId}/sources/github`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ repo_url, token: token || undefined }),
         });
-        const syncRes = await fetch(`/api/projects/${currentProjectId}/sources/github/sync?max_commits=50`, { method: 'POST' });
+        const connData = await connRes.json();
+        if (!connRes.ok) {
+          throw new Error(connData.detail || 'Connection setup failed');
+        }
+
+        msg.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i> Fetching commits, diffs & PRs...';
+        const syncUrl = `/api/projects/${currentProjectId}/sources/github/sync?connection_id=${connData.id}&max_commits=10`;
+        const syncRes = await fetch(syncUrl, { method: 'POST' });
         const syncData = await syncRes.json();
+        if (!syncRes.ok) {
+          throw new Error(syncData.detail || syncData.error_summary || 'Sync failed');
+        }
+
         msg.className = 'text-[11px] text-emerald-400 font-semibold';
-        msg.innerText = `✓ GitHub synced! Run #${syncData.id} status: ${syncData.status} (Created: ${syncData.records_created})`;
+        msg.innerText = `✓ GitHub synced! Run #${syncData.id} [${syncData.status}]: Discovered ${syncData.records_discovered}, Created ${syncData.records_created}`;
         loadIngestionRuns();
       } catch (err) {
         msg.className = 'text-[11px] text-rose-400';
         msg.innerText = 'Sync failed: ' + err;
+      } finally {
+        if (btn) btn.disabled = false;
       }
     }
 
@@ -2361,7 +2445,7 @@
       const formData = new FormData();
       formData.append('file', file);
 
-      msg.className = 'text-[11px] text-cyan-400';
+      msg.className = 'text-[11px] text-blue-600';
       msg.innerText = `Uploading and parsing ${file.name}...`;
 
       try {
@@ -2395,7 +2479,7 @@
         return;
       }
 
-      msg.className = 'text-[11px] text-cyan-400';
+      msg.className = 'text-[11px] text-blue-600';
       msg.innerText = 'Validating URL (SSRF check) and downloading...';
 
       try {
@@ -2441,13 +2525,13 @@
           const statusClass = r.status === 'COMPLETED' ? 'bg-emerald-950 text-emerald-400 border-emerald-800' : (r.status === 'RUNNING' ? 'bg-blue-950 text-blue-400 border-blue-800 animate-pulse' : 'bg-rose-950 text-rose-400 border-rose-800');
 
           tr.innerHTML = `
-            <td class="px-4 py-3 font-mono text-cyan-400 font-bold">#${r.id}</td>
-            <td class="px-4 py-3 text-slate-200 font-semibold">${r.source_system}</td>
+            <td class="px-4 py-3 font-mono text-blue-600 font-bold">#${r.id}</td>
+            <td class="px-4 py-3 text-slate-800 font-semibold">${r.source_system}</td>
             <td class="px-4 py-3"><span class="px-2 py-0.5 rounded text-[10px] font-semibold border ${statusClass}">${r.status}</span></td>
-            <td class="px-4 py-3 text-slate-300 font-mono">${(r.records_discovered || 0).toLocaleString()}</td>
+            <td class="px-4 py-3 text-slate-700 font-mono">${(r.records_discovered || 0).toLocaleString()}</td>
             <td class="px-4 py-3 text-emerald-400 font-mono font-semibold">${(r.records_created || 0).toLocaleString()}</td>
-            <td class="px-4 py-3 text-slate-400 font-mono">${r.records_updated || 0} / ${r.records_skipped || 0}</td>
-            <td class="px-4 py-3 text-slate-400 font-mono text-[11px]">${time}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono">${r.records_updated || 0} / ${r.records_skipped || 0}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-[11px]">${time}</td>
             <td class="px-4 py-3 text-slate-500 font-mono text-[10px] max-w-xs truncate" title="${r.checkpoint_data || r.error_summary || ''}">${r.checkpoint_data || r.error_summary || '-'}</td>
           `;
           tbody.appendChild(tr);
@@ -2480,14 +2564,14 @@
 
           tr.innerHTML = `
             <td class="px-4 py-3 font-mono text-purple-400 font-bold">#${doc.id}</td>
-            <td class="px-4 py-3 text-slate-200 font-medium">${doc.filename}</td>
-            <td class="px-4 py-3 font-mono text-[11px] text-slate-400">${doc.content_type || 'text/plain'}</td>
-            <td class="px-4 py-3 text-slate-300 font-mono">${doc.page_count || 1}</td>
-            <td class="px-4 py-3 text-slate-400 font-mono">${(doc.file_size_bytes || 0).toLocaleString()} B</td>
+            <td class="px-4 py-3 text-slate-800 font-medium">${doc.filename}</td>
+            <td class="px-4 py-3 font-mono text-[11px] text-slate-500">${doc.file_type || doc.content_type || 'text/plain'}</td>
+            <td class="px-4 py-3 text-slate-700 font-mono">${doc.page_count || 1}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono">${(doc.file_size || doc.file_size_bytes || 0).toLocaleString()} B</td>
             <td class="px-4 py-3 text-rose-400 font-mono text-[10px] truncate max-w-[130px]" title="${doc.sha256_hash}">${doc.sha256_hash ? doc.sha256_hash.substring(0, 12) + '...' : '-'}</td>
-            <td class="px-4 py-3 text-slate-400 font-mono text-[11px]">${time}</td>
+            <td class="px-4 py-3 text-slate-500 font-mono text-[11px]">${time}</td>
             <td class="px-4 py-3 text-right">
-              <button onclick="openDocumentDetailModal(${idx})" class="px-2 py-1 bg-slate-800 hover:bg-slate-700 text-purple-300 border border-slate-700 rounded text-[11px] transition">
+              <button onclick="openDocumentDetailModal(${idx})" class="px-2 py-1 bg-slate-800 hover:bg-slate-100 text-purple-300 border border-slate-200 rounded text-[11px] transition">
                 <i class="fa-solid fa-eye mr-1"></i> Excerpt
               </button>
             </td>
@@ -2504,10 +2588,10 @@
       if (!doc) return;
       document.getElementById('modal-document-detail').classList.remove('hidden');
       document.getElementById('doc-detail-filename').innerText = doc.filename;
-      document.getElementById('doc-detail-size').innerText = (doc.file_size_bytes || 0).toLocaleString();
+      document.getElementById('doc-detail-size').innerText = (doc.file_size || doc.file_size_bytes || 0).toLocaleString();
       document.getElementById('doc-detail-pages').innerText = doc.page_count || 1;
       document.getElementById('doc-detail-sha').innerText = doc.sha256_hash || '-';
-      document.getElementById('doc-detail-excerpt').innerText = doc.parsed_text_excerpt || 'No parsed text excerpt available.';
+      document.getElementById('doc-detail-excerpt').innerText = doc.extracted_text || doc.parsed_text_excerpt || 'No parsed text excerpt available.';
     }
 
     function closeDocumentDetailModal() {
